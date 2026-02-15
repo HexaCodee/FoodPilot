@@ -1,7 +1,7 @@
 using System;
 using AuthService.Domain.Entities;
 
-namespace AuthService.Domain.Interface;
+namespace AuthService.Domain.Interfaces;
 
 public interface IRoleRepository
 {

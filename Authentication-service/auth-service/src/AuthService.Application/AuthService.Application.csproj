@@ -18,8 +18,11 @@
 
   <ItemGroup>
     <Folder Include="DTOs\" />
+    <Folder Include="Exceptions\" />
+    <Folder Include="Extensions\" />
     <Folder Include="Interfaces\" />
     <Folder Include="Services\" />
+    <Folder Include="Validators\" />
   </ItemGroup>
 
   <PropertyGroup>
