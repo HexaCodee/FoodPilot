@@ -1,3 +1,5 @@
+namespace AuthService.Domain.Constants;
+
 public class RoleConstants
 {
     public const string CLIENT = "CLIENT";
