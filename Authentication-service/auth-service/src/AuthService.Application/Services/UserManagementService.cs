@@ -6,7 +6,7 @@ using AuthService.Domain.Interfaces;
 
 namespace AuthService.Application.Services;
 
-public class UserManagementService(IUserRepository users, IRoleRepository roles, ICloudinaryService cloudinary) : IUserManagementService
+public class UserManagementService(IUserRepository users, IRoleRepository roles) : IUserManagementService
 {
    
     public async Task<UserResponseDto> UpdateUserRoleAsync(string userId, string roleName)
@@ -53,7 +53,6 @@ public class UserManagementService(IUserRepository users, IRoleRepository roles,
             Surname = user.Surname,
             Username = user.Username,
             Email = user.Email,
-            ProfilePicture = cloudinary.GetFullImageUrl(user.UserProfile?.ProfilePicture ?? string.Empty),
             Phone = user.UserProfile?.Phone ?? string.Empty,
             Role = role.Name,
             Status = user.Status,
@@ -80,7 +79,6 @@ public class UserManagementService(IUserRepository users, IRoleRepository roles,
             Surname = u.Surname,
             Username = u.Username,
             Email = u.Email,
-            ProfilePicture = cloudinary.GetFullImageUrl(u.UserProfile?.ProfilePicture ?? string.Empty),
             Phone = u.UserProfile?.Phone ?? string.Empty,
             Role = roleName,
             Status = u.Status,
