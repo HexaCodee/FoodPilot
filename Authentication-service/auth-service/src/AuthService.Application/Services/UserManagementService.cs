@@ -8,7 +8,7 @@ namespace AuthService.Application.Services;
 
 public class UserManagementService(IUserRepository users, IRoleRepository roles) : IUserManagementService
 {
-   
+
     public async Task<UserResponseDto> UpdateUserRoleAsync(string userId, string roleName)
     {
         // Normalize
@@ -87,4 +87,6 @@ public class UserManagementService(IUserRepository users, IRoleRepository roles)
             UpdatedAt = u.UpdatedAt
         }).ToList();
     }
+
+    
 }

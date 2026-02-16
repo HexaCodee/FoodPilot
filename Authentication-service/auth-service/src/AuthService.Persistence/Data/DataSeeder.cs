@@ -59,7 +59,6 @@ public static class DataSeeder
                     {
                         Id = profileId,
                         UserId = userId,
-                        ProfilePicture = string.Empty,
                         Phone = "00000000"
                     },
 

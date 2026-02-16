@@ -131,7 +131,6 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                 .ValueGeneratedOnAdd();
             entity.Property(e => e.UserId)
                 .HasMaxLength(16);
-            entity.Property(e => e.ProfilePicture).HasDefaultValue("");
             entity.Property(e => e.Phone).HasMaxLength(8);
         });
         
