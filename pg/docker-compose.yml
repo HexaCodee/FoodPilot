@@ -5,11 +5,11 @@ services:
     image: postgres:13
     container_name: foodpilot_postgres
     environment:
-      POSTGRES_USER: IN6AM
-      POSTGRES_PASSWORD: In6amKnl!
+      POSTGRES_USER: FOODPILOT
+      POSTGRES_PASSWORD: FoodPilot2026?
       POSTGRES_DB: foodpilot
     ports:
-      - "5433:5432"
+      - "5437:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped

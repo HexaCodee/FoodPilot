@@ -18,12 +18,11 @@ public class AuthService(
     IRoleRepository roleRepository,
     IPasswordHashService passwordHashService,
     IJwtTokenService jwtTokenService,
-    ICloudinaryService cloudinaryService,
     IEmailService emailService,
     IConfiguration configuration,
     ILogger<AuthService> logger) : IAuthService
 {
-    private readonly ICloudinaryService _cloudinaryService = cloudinaryService;
+
     public async Task<RegisterResponseDto> RegisterAsync(RegisterDto registerDto)
     {
         // Verificar si el email ya existe
@@ -38,34 +37,6 @@ public class AuthService(
         {
             logger.LogRegistrationWithExistingUsername();
             throw new BusinessException(ErrorCodes.USERNAME_ALREADY_EXISTS, "El nombre de usuario ya existe");
-        }
-
-        // Validar y manejar la imagen de perfil
-        string profilePicturePath;
-
-        if (registerDto.ProfilePicture != null && registerDto.ProfilePicture.Size > 0)
-        {
-            var (isValid, errorMessage) = FileValidator.ValidateImage(registerDto.ProfilePicture);
-            if (!isValid)
-            {
-                logger.LogWarning($"Validación de archivo fallida: {errorMessage}");
-                throw new BusinessException(ErrorCodes.INVALID_FILE_FORMAT, errorMessage!);
-            }
-
-            try
-            {
-                var fileName = FileValidator.GenerateSecureFileName(registerDto.ProfilePicture.FileName);
-                profilePicturePath = await _cloudinaryService.UploadImageAsync(registerDto.ProfilePicture, fileName);
-            }
-            catch (Exception)
-            {
-                logger.LogImageUploadError();
-                throw new BusinessException(ErrorCodes.IMAGE_UPLOAD_FAILED, "Error al subir la imagen de perfil");
-            }
-        }
-        else
-        {
-            profilePicturePath = _cloudinaryService.GetDefaultAvatarUrl();
         }
 
         // Crear nuevo usuario y entidades relacionadas
@@ -96,7 +67,6 @@ public class AuthService(
             {
                 Id = userProfileId,
                 UserId = userId,
-                ProfilePicture = profilePicturePath,
                 Phone = registerDto.Phone
             },
             UserEmail = new UserEmail
@@ -211,7 +181,6 @@ public class AuthService(
             Surname = user.Surname,
             Username = user.Username,
             Email = user.Email,
-            ProfilePicture = _cloudinaryService.GetFullImageUrl(user.UserProfile?.ProfilePicture ?? string.Empty),
             Phone = user.UserProfile?.Phone ?? string.Empty,
             Role = userRole,
             Status = user.Status,
@@ -227,7 +196,6 @@ public class AuthService(
         {
             Id = user.Id,
             Username = user.Username,
-            ProfilePicture = _cloudinaryService.GetFullImageUrl(user.UserProfile?.ProfilePicture ?? string.Empty),
             Role = user.UserRoles.FirstOrDefault()?.Role?.Name ?? RoleConstants.CLIENT
         };
     }
