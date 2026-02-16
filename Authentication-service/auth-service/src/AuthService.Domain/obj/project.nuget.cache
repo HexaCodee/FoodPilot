@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "wrGtStyJ9Ss=",
+  "dgSpecHash": "Gm5u3BKsPsU=",
   "success": true,
-  "projectFilePath": "C:\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Domain\\AuthService.Domain.csproj",
+  "projectFilePath": "C:\\Users\\1\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Domain\\AuthService.Domain.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\diego\\.nuget\\packages\\system.componentmodel.annotations\\5.0.0\\system.componentmodel.annotations.5.0.0.nupkg.sha512"
+    "C:\\Users\\1\\.nuget\\packages\\system.componentmodel.annotations\\5.0.0\\system.componentmodel.annotations.5.0.0.nupkg.sha512"
   ],
   "logs": []
 }
