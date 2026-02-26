@@ -1,13 +1,31 @@
 import { Router } from "express";
-import { createMenuController } from "./menu.controller.js";
+// ...existing code...
 import { validateCreateMenu } from "../../middlewares/menu-validator.js";
 
 const router = Router();
 
-router.post(
-    '/',
-    validateCreateMenu,
-    createMenuController
-);
+import {
+    createMenuController,
+    getMenusController,
+    getMenuByIdController,
+    updateMenuController,
+    changeMenuStatusController
+} from "./menu.controller.js";
+
+// Crear menú
+router.post('/', validateCreateMenu, createMenuController);
+
+// Listar menús
+router.get('/', getMenusController);
+
+// Obtener menú por ID
+router.get('/:id', getMenuByIdController);
+
+// Actualizar menú
+router.put('/:id', updateMenuController);
+
+// Cambiar estado (activar/desactivar)
+router.patch('/:id/activate', changeMenuStatusController);
+router.patch('/:id/deactivate', changeMenuStatusController);
 
 export default router;
