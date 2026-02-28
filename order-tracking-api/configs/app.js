@@ -6,6 +6,7 @@ const helmetConfig = require('./helmet.configuration');
 const rateLimitConfig = require('./ratelimit.configuration');
 
 const orderRoutes = require('../src/routes/order.routes');
+const reservationRoutes = require('../src/routes/reservation.routes');
 const errorMiddleware = require('../middlewares/error.middleware');
 const notFoundMiddleware = require('../middlewares/notfound.middleware');
 
@@ -25,6 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Rutas
 app.use('/api/orders', orderRoutes);
+app.use('/api/reservations', reservationRoutes);
 
 // Not Found
 app.use(notFoundMiddleware);
