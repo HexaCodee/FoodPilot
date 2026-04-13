@@ -1,6 +1,9 @@
+// Importar funciones de validación de express-validator
 const { body, param } = require('express-validator');
+// Importar modelo Reservation para validación personalizada
 const Reservation = require('../models/reservation.model');
 
+// Reglas de validación para crear una reserva
 exports.createReservationValidator = [
     body('tableNumber').notEmpty().withMessage('Mesa requerida'),
     body('reservedAt')
@@ -27,10 +30,12 @@ exports.createReservationValidator = [
     })
 ];
 
+// Reglas de validación para cancelar una reserva
 exports.cancelReservationValidator = [
     param('id').isMongoId().withMessage('ID inválido')
 ];
 
+// Reglas de validación para completar una reserva
 exports.completeReservationValidator = [
     param('id').isMongoId().withMessage('ID inválido')
 ];
