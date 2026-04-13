@@ -3,6 +3,7 @@ using AuthService.Application.DTOs.Email;
 
 namespace AuthService.Application.Interfaces;
 
+// Interfaz para el servicio de autenticación
 public interface IAuthService
 {
     Task<RegisterResponseDto> RegisterAsync(RegisterDto registerDto);

@@ -7,10 +7,12 @@ using Microsoft.AspNetCore.RateLimiting;
 
 namespace AuthService.Api.Controllers;
 
+// Controlador para autenticación: login, registro, verificación email
 [ApiController]
 [Route("api/v1/[controller]")]
 public class AuthController(IAuthService authService) : ControllerBase
 {
+    // Endpoint para login: valida credenciales y devuelve JWT
     [HttpPost("login")]
     [EnableRateLimiting("AuthPolicy")]
     public async Task<ActionResult<AuthResponseDto>> LoginI([FromBody] LoginDto loginDto)
@@ -19,6 +21,7 @@ public class AuthController(IAuthService authService) : ControllerBase
         return Ok(result);
     }
 
+    // Endpoint para registro: crea usuario con verificación email
     [HttpPost("register")]
     [RequestSizeLimit(10 * 1024 * 1024)]
     [EnableRateLimiting("AuthPolicy")]
@@ -28,6 +31,7 @@ public class AuthController(IAuthService authService) : ControllerBase
         return StatusCode(201, result);
     }
 
+    // Endpoint para verificar email usando token
     [HttpPost("verify-email")]
     [EnableRateLimiting("ApiPolicy")]
     public async Task<ActionResult<EmailResponseDto>> VerifyEmail([FromBody] VerifyEmailDto verifyEmailDto)

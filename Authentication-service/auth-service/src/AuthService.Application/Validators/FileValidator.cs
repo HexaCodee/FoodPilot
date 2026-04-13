@@ -2,11 +2,15 @@ using AuthService.Application.Interfaces;
 
 namespace AuthService.Application.Validators;
 
+// Validador estático para archivos, especialmente imágenes
 public static class FileValidator
 {
+    // Extensiones permitidas para imágenes
     private static readonly string[] AllowedImageExtensions = [".jpg", ".jpeg", ".png", ".webp"];
+    // Tamaño máximo de archivo en bytes (5MB)
     private const int MaxFileSizeInBytes = 5 * 1024 * 1024; // 5MB
 
+    // Validar imagen subida
     public static (bool IsValid, string? ErrorMessage) ValidateImage(IFileData file)
     {
         if (file == null || file.Size == 0)
@@ -37,6 +41,7 @@ public static class FileValidator
         return (true, null);
     }
 
+    // Generar nombre seguro para archivo
     public static string GenerateSecureFileName(string originalFileName)
     {
         var extension = Path.GetExtension(originalFileName).ToLowerInvariant();

@@ -13,6 +13,7 @@ using AuthService.Application.DTOs.Email;
 
 namespace AuthService.Application.Services;
 
+// Servicio principal de autenticación: registro, login, verificación
 public class AuthService(
     IUserRepository userRepository,
     IRoleRepository roleRepository,
@@ -22,38 +23,40 @@ public class AuthService(
     IConfiguration configuration,
     ILogger<AuthService> logger) : IAuthService
 {
-
+    // Registra usuario: valida unicidad, crea entidades, envía email verificación
     public async Task<RegisterResponseDto> RegisterAsync(RegisterDto registerDto)
     {
-        // Verificar si el email ya existe
+        // Verificar email único
         if (await userRepository.ExistsByEmailAsync(registerDto.Email))
         {
             logger.LogRegistrationWithExistingEmail();
             throw new BusinessException(ErrorCodes.EMAIL_ALREADY_EXISTS, "El email ya existe");
         }
 
-        // Verificar si el username ya existe
+        // Verificar username único
         if (await userRepository.ExistsByUsernameAsync(registerDto.Username))
         {
             logger.LogRegistrationWithExistingUsername();
             throw new BusinessException(ErrorCodes.USERNAME_ALREADY_EXISTS, "El nombre de usuario ya existe");
         }
 
-        // Crear nuevo usuario y entidades relacionadas
+        // Generar token verificación email
         var emailVerificationToken = TokenGenerator.GenerateEmailVerificationToken();
 
+        // Generar IDs únicos
         var userId = UuidGenerator.GenerateUserId();
         var userProfileId = UuidGenerator.GenerateUserId();
         var userEmailId = UuidGenerator.GenerateUserId();
         var userRoleId = UuidGenerator.GenerateUserId();
 
-        // Obtener el rol por defecto (CLIENT) ya seedado en DB
+        // Obtener rol por defecto (CLIENT)
         var defaultRole = await roleRepository.GetByNameAsync(RoleConstants.CLIENT);
         if (defaultRole == null)
         {
             throw new InvalidOperationException($"Rol por defecto '{RoleConstants.CLIENT}' no encontrado. Asegúrese de que la siembra se ejecute antes del registro.");
         }
 
+        // Crear objeto usuario con relaciones
         var user = new User
         {
             Id = userId,
@@ -88,12 +91,12 @@ public class AuthService(
             ]
         };
 
-        // Guardar usuario y entidades relacionadas
+        // Guardar en DB
         var createdUser = await userRepository.CreateAsync(user);
 
         logger.LogUserRegistered(createdUser.Username);
 
-        // Enviar email de verificación en background
+        // Enviar email verificación en background
         _ = Task.Run(async () =>
         {
             try
@@ -107,7 +110,7 @@ public class AuthService(
             }
         });
 
-        // Crear respuesta sin JWT - solo confirmación de registro
+        // Respuesta registro sin JWT
         return new RegisterResponseDto
         {
             Success = true,
@@ -117,30 +120,31 @@ public class AuthService(
         };
     }
 
+    // Login: busca usuario, verifica credenciales, genera JWT
     public async Task<AuthResponseDto> LoginAsync(LoginDto loginDto)
     {
-        // Buscar usuario por email o username
+        // Buscar por email o username
         User? user = null;
 
         if (loginDto.EmailOrUsername.Contains('@'))
         {
-            // Es un email
+            // Es email
             user = await userRepository.GetByEmailAsync(loginDto.EmailOrUsername.ToLowerInvariant());
         }
         else
         {
-            // Es un username
+            // Es username
             user = await userRepository.GetByUsernameAsync(loginDto.EmailOrUsername);
         }
 
-        // Verificar si el usuario existe
+        // Verificar existencia
         if (user == null)
         {
             logger.LogFailedLoginAttempt();
             throw new UnauthorizedAccessException("Credenciales inválidas");
         }
 
-        // Verificar si el usuario está activo
+        // Verificar estado activo
         if (!user.Status)
         {
             logger.LogFailedLoginAttempt();
@@ -160,7 +164,7 @@ public class AuthService(
         var token = jwtTokenService.GenerateToken(user);
         var expiryMinutes = int.Parse(configuration["JwtSettings:ExpiryInMinutes"] ?? "30");
 
-        // Crear respuesta compacta
+        // Respuesta con token
         return new AuthResponseDto
         {
             Success = true,
@@ -171,6 +175,7 @@ public class AuthService(
         };
     }
 
+    // Mapear User a UserResponseDto
     private UserResponseDto MapToUserResponseDto(User user)
     {
         var userRole = user.UserRoles.FirstOrDefault()?.Role?.Name ?? RoleConstants.CLIENT;
@@ -190,6 +195,7 @@ public class AuthService(
         };
     }
 
+    // Mapear User a UserDetailsDto
     private UserDetailsDto MapToUserDetailsDto(User user)
     {
         return new UserDetailsDto
@@ -200,6 +206,7 @@ public class AuthService(
         };
     }
 
+    // Verificar email con token
     public async Task<EmailResponseDto> VerifyEmailAsync(VerifyEmailDto verifyEmailDto)
     {
         var user = await userRepository.GetByEmailVerificationTokenAsync(verifyEmailDto.Token);
@@ -243,6 +250,7 @@ public class AuthService(
         };
     }
 
+    // Reenviar email de verificación
     public async Task<EmailResponseDto> ResendVerificationEmailAsync(ResendVerificationDto resendDto)
     {
         var user = await userRepository.GetByEmailAsync(resendDto.Email);

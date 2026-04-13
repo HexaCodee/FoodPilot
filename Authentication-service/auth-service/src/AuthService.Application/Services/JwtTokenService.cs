@@ -7,8 +7,10 @@ using System.Security.Claims;
 using System.Text;
 namespace AuthService.Application.Services;
 
+// Servicio para generar tokens JWT
 public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
 {
+    // Generar token JWT para usuario
     public string GenerateToken(User user)
     {
         var jwtSettings = configuration.GetSection("JwtSettings");
@@ -20,7 +22,7 @@ public class JwtTokenService(IConfiguration configuration) : IJwtTokenService
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        // Get user's role (assumes single role per user)
+        // Obtener rol del usuario (asume un rol por usuario)
         var role = user.UserRoles?.FirstOrDefault()?.Role?.Name ?? "USER_ROLE";
 
         var claims = new[]

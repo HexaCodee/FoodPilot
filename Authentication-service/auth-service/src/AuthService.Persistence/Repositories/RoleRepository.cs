@@ -6,8 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.Persistence.Repositories;
 
+// Repositorio para operaciones de roles
 public class RoleRepository(ApplicationDbContext context) : IRoleRepository
 {
+    // Contar usuarios en un rol específico
     public async Task<int> CountUsersInRoleAsync(string roleName)
     {
         return await context.UserRoles
@@ -18,11 +20,13 @@ public class RoleRepository(ApplicationDbContext context) : IRoleRepository
             .CountAsync();
     }
 
+    // Obtener rol por nombre
     public async Task<Role?> GetByNameAsync(string roleName)
     {
         return await context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
     }
 
+    // Obtener nombres de roles de un usuario
     public async Task<IReadOnlyList<string>> GetUserRoleNamesAsync(string userId)
     {
         return await context.UserRoles
@@ -32,6 +36,7 @@ public class RoleRepository(ApplicationDbContext context) : IRoleRepository
             .ToListAsync();
     }
 
+    // Obtener usuarios por rol
     public async Task<IReadOnlyList<User>> GetUsersByRoleAsync(string roleName)
     {
         var users = await context.Users
