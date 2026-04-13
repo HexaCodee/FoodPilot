@@ -10,6 +10,8 @@ import { dbConnection } from './db.configuration.js';
 import restaurantRoutes from '../src/restaurants/restaurant.routes.js';
 import tableRoutes from '../src/tables/table.routes.js';
 import menuRoutes from '../src/menus/menu.routes.js';
+import swaggerUi from 'swagger-ui-express';
+import { specs as swaggerSpec } from './documentation.js';
 
 const BASE_PATH = '/restaurantAdmin/v1';
 
@@ -24,6 +26,7 @@ const routes = (app) => {
             service: 'FoodPilot restaurant Admin Server',
         })
     })
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec))
 
     app.use((req, res) => {
         res.status(404).json({
