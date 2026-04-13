@@ -4,29 +4,29 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace AuthService.Persistence.Data;
-/// <summary>
-/// Contexto de base de datos para el módulo de Autenticación.
-///
-/// Responsable de:
-/// - Exponer los DbSet que representan las tablas del sistema de autenticación.
-/// - Configurar propiedades, restricciones y relaciones entre entidades mediante Fluent API.
-/// - Aplicar la convención de nombres en snake_case para tablas, columnas, claves e índices.
-/// - Definir índices y restricciones de unicidad (por ejemplo, Username y Email).
-/// - Configurar relaciones uno a uno y uno a muchos entre entidades.
-/// - Gestionar automáticamente los campos CreatedAt y UpdatedAt.
-///
-/// Esta clase centraliza toda la configuración de persistencia del módulo de autenticación.
-/// </summary>
 
+// Contexto DB para módulo autenticación: configura entidades, relaciones, snake_case
 public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options) 
 {
+    // Tabla usuarios
     public DbSet<User> Users { get; set; }
+
+    // Tabla roles
     public DbSet<Role> Roles { get; set; }
+
+    // Tabla user-roles
     public DbSet<UserRole> UserRoles { get; set; }
+
+    // Tabla perfiles usuario
     public DbSet<UserProfile> UserProfiles { get; set; }
+
+    // Tabla emails usuario
     public DbSet<UserEmail> UserEmails { get; set; }
+
+    // Tabla resets contraseña
     public DbSet<UserPasswordReset> UserPasswordResets { get; set; }
 
+    // Función para convertir a snake_case
     public static string ToSnakeCase(string input)
     {
         if(string.IsNullOrEmpty(input))
@@ -37,19 +37,20 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         ).ToLower();
     }
     
+    // Configurar modelo: convenciones snake_case, restricciones
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        //Funciónes para convertir nombres de tablas, columnas, primary keys, foreing keys e indexes a snake_case
+        // Aplicar snake_case a tablas, columnas, keys, indexes
         foreach(var entity in modelBuilder.Model.GetEntityTypes())
         {
             var tableName = entity.GetTableName();
-            //Snake case para nombres de tablas
+            // Nombres tablas en snake_case
             if(!string.IsNullOrEmpty(tableName))
             {
                 entity.SetTableName(ToSnakeCase(tableName));
             }
-            //Snake case para nombres columnas
+            // Nombres columnas en snake_case
             foreach(var property in entity.GetProperties())
             {
                 var columnName = property.GetColumnName();
@@ -58,7 +59,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                     property.SetColumnName(ToSnakeCase(columnName));
                 }
             }
-            //Snake case para primary keys y foreing keys
+            // Keys y foreign keys en snake_case
             foreach(var key in entity.GetKeys())
             {
                 var keyName = key.GetName();
@@ -67,7 +68,7 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                     key.SetName(ToSnakeCase(keyName));
                 }
             }
-            //indexes snake_case
+            // Indexes en snake_case
             foreach(var index in entity.GetIndexes())
             {
                 var indexName = index.GetDatabaseName();

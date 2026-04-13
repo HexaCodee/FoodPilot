@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 namespace AuthService.Application.Services;
 
+// Servicio para hash y verificación de contraseñas usando Argon2
 public class PasswordHashService : IPasswordHashService
 {
     // Configuración idéntica a Node.js para compatibilidad
@@ -13,6 +14,7 @@ public class PasswordHashService : IPasswordHashService
     private const int Memory = 102400; // m=102400 KB = 100 MB (igual que Node.js)
     private const int Parallelism = 8; // p=8 (igual que Node.js)
 
+    // Hashear contraseña con Argon2
     public string HashPassword(string password)
     {
         var salt = new byte[SaltSize];
@@ -38,6 +40,7 @@ public class PasswordHashService : IPasswordHashService
         return $"$argon2id$v=19$m={Memory},t={Iterations},p={Parallelism}${saltBase64}${hashBase64}";
     }
 
+    // Verificar contraseña contra hash
     public bool VerifyPassword(string password, string hashedPassword)
     {
         try
@@ -66,6 +69,7 @@ public class PasswordHashService : IPasswordHashService
         }
     }
 
+    // Verificar formato estándar Argon2
     private bool VerifyArgon2StandardFormat(string password, string hashedPassword)
     {
         try
@@ -112,6 +116,7 @@ public class PasswordHashService : IPasswordHashService
         }
     }
 
+    // Verificar formato legacy (Base64 simple)
     private bool VerifyLegacyFormat(string password, string hashedPassword)
     {
         var hashBytes = Convert.FromBase64String(hashedPassword);
@@ -133,6 +138,7 @@ public class PasswordHashService : IPasswordHashService
         return hash.SequenceEqual(computedHash);
     }
 
+    // Convertir Base64 URL-safe a Base64 estándar
     private static string FromBase64UrlSafe(string base64UrlSafe)
     {
         // Reemplazar caracteres URL-safe con caracteres Base64 estándar

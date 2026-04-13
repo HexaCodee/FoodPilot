@@ -6,10 +6,13 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.Persistence.Data;
 
+// Clase para sembrar datos iniciales en la DB
 public static class DataSeeder
 {
+    // Sembrar roles y usuario admin por defecto
     public static async Task SeedAsync(ApplicationDbContext context)
     {
+        // Sembrar roles si no existen
         if (!context.Roles.Any())
         {
             var roles = new List<Role>
@@ -34,6 +37,8 @@ public static class DataSeeder
             await context.SaveChangesAsync();
 
         }
+
+        // Sembrar usuario admin si no existen usuarios
         if (!await context.Users.AnyAsync())
         {
             var adminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == RoleConstants.PLATFORM_ADMIN);
@@ -45,6 +50,7 @@ public static class DataSeeder
                 var emailId = UuidGenerator.GenerateUserId();
                 var userRoleId = UuidGenerator.GenerateUserId();
 
+                // Crear usuario admin de prueba
                 var adminUser = new User
                 {
                     Id = userId,

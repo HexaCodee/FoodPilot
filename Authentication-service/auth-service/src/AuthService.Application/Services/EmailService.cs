@@ -7,8 +7,10 @@ using AuthService.Application.Interfaces;
 
 namespace AuthService.Application.Services;
 
+// Servicio para envío de emails usando SMTP
 public class EmailService(IConfiguration configuration, ILogger<EmailService> logger) : IEmailService
 {
+    // Enviar email de verificación
     public async Task SendEmailVerificationAsync(string email, string username, string token)
     {
         var subject = "Verifica tu dirección de correo electrónico";
@@ -29,6 +31,7 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
         await SendEmailAsync(email, subject, body);
     }
 
+    // Enviar email de reset de contraseña
     public async Task SendPasswordResetAsync(string email, string username, string token)
     {
         var subject = "Restablece tu contraseña";
@@ -50,6 +53,7 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
         await SendEmailAsync(email, subject, body);
     }
 
+    // Enviar email de bienvenida
     public async Task SendWelcomeEmailAsync(string email, string username)
     {
         var subject = "¡Bienvenido a FoodPilot!";
@@ -65,6 +69,7 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
         await SendEmailAsync(email, subject, body);
     }
 
+    // Método privado para enviar email usando SMTP
     private async Task SendEmailAsync(string to, string subject, string body)
     {
         var smtpSettings = configuration.GetSection("SmtpSettings");
@@ -79,7 +84,7 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
                 return;
             }
 
-            // Validar configuración
+            // Validar configuración SMTP
             var host = smtpSettings["Host"];
             var portString = smtpSettings["Port"];
             var username = smtpSettings["Username"];
@@ -93,7 +98,7 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
                 throw new InvalidOperationException("La configuración SMTP no está configurada correctamente");
             }
 
-            // Avoid logging sensitive SMTP details
+            // Evitar log de datos sensibles SMTP
 
             var port = int.Parse(portString ?? "587");
 
@@ -130,7 +135,7 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
                     await client.ConnectAsync(host, port, SecureSocketOptions.Auto);
                 }
 
-                // Autenticación
+                // Autenticación SMTP
                 await client.AuthenticateAsync(username, password);
 
                 // Crear mensaje con MimeKit
@@ -140,7 +145,9 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
                 message.Subject = subject;
                 message.Body = new TextPart("html") { Text = body };
 
-                // Enviar
+                // Enviar email
+                await client.SendAsync(message);
+                // Enviar email
                 await client.SendAsync(message);
                 logger.LogInformation("Email enviado exitosamente");
 

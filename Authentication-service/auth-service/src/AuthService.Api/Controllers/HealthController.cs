@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Mvc;
  
 namespace AuthService.Api.Controllers;
  
+// Controlador para endpoint de salud
 [ApiController]
 [Route("api/v1/[controller]")]
 public class HealthController : ControllerBase
 {
+    // Endpoint GET para verificar estado del servicio
     [HttpGet]
     public IActionResult GetHealth()
     {
