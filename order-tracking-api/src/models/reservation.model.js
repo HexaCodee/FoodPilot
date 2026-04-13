@@ -1,5 +1,7 @@
+// Importar Mongoose para definición de esquema
 const mongoose = require('mongoose');
 
+// Definir el esquema para Reservation
 const reservationSchema = new mongoose.Schema({
     tableNumber: {
         type: String,
@@ -17,10 +19,11 @@ const reservationSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-// ensure only one active reservation per table and timeslot
+// Asegurar que solo haya una reserva activa por mesa y horario
 reservationSchema.index(
     { tableNumber: 1, reservedAt: 1, status: 1 },
     { unique: true, partialFilterExpression: { status: 'ACTIVA' } }
 );
 
+// Exportar el modelo Reservation
 module.exports = mongoose.model('Reservation', reservationSchema);

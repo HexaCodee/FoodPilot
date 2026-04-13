@@ -1,5 +1,7 @@
+// Importar Mongoose para definición de esquema
 const mongoose = require('mongoose');
 
+// Definir el esquema para Order
 const orderSchema = new mongoose.Schema({
     customerName: {
         type: String,
@@ -22,4 +24,5 @@ const orderSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// Exportar el modelo Order
 module.exports = mongoose.model('Order', orderSchema);

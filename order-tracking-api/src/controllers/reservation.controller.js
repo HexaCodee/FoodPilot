@@ -1,7 +1,8 @@
+// Importar modelos Reservation y Table
 const Reservation = require('../models/reservation.model');
 const Table = require('../models/table.model');
 
-// helper that ensures a table document exists and sets its status
+// Función auxiliar para asegurar que existe un documento de mesa y establecer su estado
 async function markTable(number, status) {
     const table = await Table.findOneAndUpdate(
         { number },
@@ -11,15 +12,16 @@ async function markTable(number, status) {
     return table;
 }
 
+// Crear una nueva reserva
 exports.createReservation = async (req, res, next) => {
     try {
         const reservation = new Reservation(req.body);
         await reservation.save();
-        // mark table as reserved
+        // Marcar mesa como reservada
         await markTable(reservation.tableNumber, 'RESERVADA');
         res.status(201).json(reservation);
     } catch (error) {
-        // duplicate key error from unique index
+        // Manejar error de clave duplicada para índice único
         if (error.code === 11000) {
             return res.status(400).json({ message: 'La mesa ya está reservada' });
         }
@@ -27,6 +29,7 @@ exports.createReservation = async (req, res, next) => {
     }
 };
 
+// Obtener todas las reservas
 exports.getReservations = async (req, res, next) => {
     try {
         const reservations = await Reservation.find();
@@ -36,6 +39,7 @@ exports.getReservations = async (req, res, next) => {
     }
 };
 
+// Obtener una reserva específica por ID
 exports.getReservationById = async (req, res, next) => {
     try {
         const reservation = await Reservation.findById(req.params.id);
@@ -48,7 +52,7 @@ exports.getReservationById = async (req, res, next) => {
     }
 };
 
-// finish reservation when customers have left
+// Completar una reserva cuando los clientes se han ido
 exports.completeReservation = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -60,7 +64,7 @@ exports.completeReservation = async (req, res, next) => {
         if (!reservation) {
             return res.status(404).json({ message: 'Reserva no encontrada' });
         }
-        // free table
+        // Liberar la mesa
         await markTable(reservation.tableNumber, 'DISPONIBLE');
         res.json(reservation);
     } catch (error) {
@@ -68,6 +72,7 @@ exports.completeReservation = async (req, res, next) => {
     }
 };
 
+// Función duplicada - Obtener una reserva específica por ID
 exports.getReservationById = async (req, res, next) => {
     try {
         const reservation = await Reservation.findById(req.params.id);
@@ -80,6 +85,7 @@ exports.getReservationById = async (req, res, next) => {
     }
 };
 
+// Cancelar una reserva
 exports.cancelReservation = async (req, res, next) => {
     try {
         const { id } = req.params;
@@ -91,7 +97,7 @@ exports.cancelReservation = async (req, res, next) => {
         if (!reservation) {
             return res.status(404).json({ message: 'Reserva no encontrada' });
         }
-        // free the table
+        // Liberar la mesa
         await markTable(reservation.tableNumber, 'DISPONIBLE');
         res.json(reservation);
     } catch (error) {
