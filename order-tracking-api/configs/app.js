@@ -6,6 +6,7 @@ const morgan = require('morgan');
 const corsConfig = require('./cors.configuration');
 const helmetConfig = require('./helmet.configuration');
 const rateLimitConfig = require('./ratelimit.configuration');
+const { specs: swaggerSpec, swaggerUI } = require('./documentation');
 
 // Importar módulos de rutas
 const orderRoutes = require('../src/routes/order.routes');
@@ -33,6 +34,9 @@ app.use(express.urlencoded({ extended: true }));
 // Montar rutas de la API
 app.use('/api/orders', orderRoutes);
 app.use('/api/reservations', reservationRoutes);
+
+// Documentación de Swagger
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
 // Manejar 404 no encontrado
 app.use(notFoundMiddleware);
