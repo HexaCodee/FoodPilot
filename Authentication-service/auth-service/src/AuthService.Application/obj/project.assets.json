@@ -4020,19 +4020,19 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Labc29\\.nuget\\packages\\": {}
+    "C:\\Users\\1\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Informatica\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Application\\AuthService.Application.csproj",
+      "projectUniqueName": "C:\\Users\\1\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Application\\AuthService.Application.csproj",
       "projectName": "AuthService.Application",
-      "projectPath": "C:\\Users\\Informatica\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Application\\AuthService.Application.csproj",
-      "packagesPath": "C:\\Users\\Labc29\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Informatica\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Application\\obj\\",
+      "projectPath": "C:\\Users\\1\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Application\\AuthService.Application.csproj",
+      "packagesPath": "C:\\Users\\1\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\1\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Application\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Labc29\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\1\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -4044,8 +4044,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\Informatica\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Domain\\AuthService.Domain.csproj": {
-              "projectPath": "C:\\Users\\Informatica\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Domain\\AuthService.Domain.csproj"
+            "C:\\Users\\1\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Domain\\AuthService.Domain.csproj": {
+              "projectPath": "C:\\Users\\1\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Domain\\AuthService.Domain.csproj"
             }
           }
         }

@@ -1448,6 +1448,22 @@
           "buildMultiTargeting/Swashbuckle.AspNetCore.props": {}
         }
       },
+      "Swashbuckle.AspNetCore.Annotations/6.5.0": {
+        "type": "package",
+        "dependencies": {
+          "Swashbuckle.AspNetCore.SwaggerGen": "6.5.0"
+        },
+        "compile": {
+          "lib/net7.0/Swashbuckle.AspNetCore.Annotations.dll": {
+            "related": ".pdb;.xml"
+          }
+        },
+        "runtime": {
+          "lib/net7.0/Swashbuckle.AspNetCore.Annotations.dll": {
+            "related": ".pdb;.xml"
+          }
+        }
+      },
       "Swashbuckle.AspNetCore.Swagger/9.0.4": {
         "type": "package",
         "dependencies": {
@@ -5066,6 +5082,32 @@
         "swashbuckle.aspnetcore.nuspec"
       ]
     },
+    "Swashbuckle.AspNetCore.Annotations/6.5.0": {
+      "sha512": "EcHd1z2pEdnpaBMTI9qjVxk6mFVGVMZ1n0ySC3fjrkXCQQ8O9fMdt9TxPJRKyjiTiTjvO9700jKjmyl+hPBinQ==",
+      "type": "package",
+      "path": "swashbuckle.aspnetcore.annotations/6.5.0",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net5.0/Swashbuckle.AspNetCore.Annotations.dll",
+        "lib/net5.0/Swashbuckle.AspNetCore.Annotations.pdb",
+        "lib/net5.0/Swashbuckle.AspNetCore.Annotations.xml",
+        "lib/net6.0/Swashbuckle.AspNetCore.Annotations.dll",
+        "lib/net6.0/Swashbuckle.AspNetCore.Annotations.pdb",
+        "lib/net6.0/Swashbuckle.AspNetCore.Annotations.xml",
+        "lib/net7.0/Swashbuckle.AspNetCore.Annotations.dll",
+        "lib/net7.0/Swashbuckle.AspNetCore.Annotations.pdb",
+        "lib/net7.0/Swashbuckle.AspNetCore.Annotations.xml",
+        "lib/netcoreapp3.0/Swashbuckle.AspNetCore.Annotations.dll",
+        "lib/netcoreapp3.0/Swashbuckle.AspNetCore.Annotations.pdb",
+        "lib/netcoreapp3.0/Swashbuckle.AspNetCore.Annotations.xml",
+        "lib/netstandard2.0/Swashbuckle.AspNetCore.Annotations.dll",
+        "lib/netstandard2.0/Swashbuckle.AspNetCore.Annotations.pdb",
+        "lib/netstandard2.0/Swashbuckle.AspNetCore.Annotations.xml",
+        "swashbuckle.aspnetcore.annotations.6.5.0.nupkg.sha512",
+        "swashbuckle.aspnetcore.annotations.nuspec"
+      ]
+    },
     "Swashbuckle.AspNetCore.Swagger/9.0.4": {
       "sha512": "syU8U4Eg3DfhU+BBeDUh66erwDsYOhp82InXbrOsqWP3qoOfQbBtePcTetkLNanovYHYX40alZBE6gQQFtBZkQ==",
       "type": "package",
@@ -7680,23 +7722,24 @@
       "Microsoft.Extensions.Logging >= 9.0.9",
       "NetEscapades.AspNetCore.SecurityHeaders >= 1.2.0",
       "Serilog.AspNetCore >= 9.0.0",
-      "Swashbuckle.AspNetCore >= 9.0.4"
+      "Swashbuckle.AspNetCore >= 9.0.4",
+      "Swashbuckle.AspNetCore.Annotations >= 6.4.1"
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Labc29\\.nuget\\packages\\": {}
+    "C:\\Users\\1\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Informatica\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Api\\AuthService.Api.csproj",
+      "projectUniqueName": "C:\\Users\\1\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Api\\AuthService.Api.csproj",
       "projectName": "AuthService.Api",
-      "projectPath": "C:\\Users\\Informatica\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Api\\AuthService.Api.csproj",
-      "packagesPath": "C:\\Users\\Labc29\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Informatica\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Api\\obj\\",
+      "projectPath": "C:\\Users\\1\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Api\\AuthService.Api.csproj",
+      "packagesPath": "C:\\Users\\1\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\1\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Api\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\Labc29\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        "C:\\Users\\1\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
@@ -7708,11 +7751,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\Informatica\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Application\\AuthService.Application.csproj": {
-              "projectPath": "C:\\Users\\Informatica\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Application\\AuthService.Application.csproj"
+            "C:\\Users\\1\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Application\\AuthService.Application.csproj": {
+              "projectPath": "C:\\Users\\1\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Application\\AuthService.Application.csproj"
             },
-            "C:\\Users\\Informatica\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Persistence\\AuthService.Persistence.csproj": {
-              "projectPath": "C:\\Users\\Informatica\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Persistence\\AuthService.Persistence.csproj"
+            "C:\\Users\\1\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Persistence\\AuthService.Persistence.csproj": {
+              "projectPath": "C:\\Users\\1\\Desktop\\FoodPilot\\Authentication-service\\auth-service\\src\\AuthService.Persistence\\AuthService.Persistence.csproj"
             }
           }
         }
@@ -7765,6 +7808,10 @@
           "Swashbuckle.AspNetCore": {
             "target": "Package",
             "version": "[9.0.4, )"
+          },
+          "Swashbuckle.AspNetCore.Annotations": {
+            "target": "Package",
+            "version": "[6.4.1, )"
           }
         },
         "imports": [
@@ -7789,5 +7836,17 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.417/PortableRuntimeIdentifierGraph.json"
       }
     }
-  }
+  },
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "AuthService.Api depende de Swashbuckle.AspNetCore.Annotations (>= 6.4.1), pero no se encontró Swashbuckle.AspNetCore.Annotations 6.4.1. Se resolvió una mejor coincidencia aproximada de Swashbuckle.AspNetCore.Annotations 6.5.0.",
+      "libraryId": "Swashbuckle.AspNetCore.Annotations",
+      "targetGraphs": [
+        "net8.0"
+      ]
+    }
+  ]
 }
