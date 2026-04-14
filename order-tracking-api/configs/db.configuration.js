@@ -5,7 +5,8 @@ const mongoose = require('mongoose');
 const connectDB = async () => {
     try {
         // Conectar usando la URI de MongoDB de las variables de entorno
-        await mongoose.connect(process.env.MONGO_URI);
+        const uri = process.env.URI_MONGODB || process.env.MONGO_URI;
+        await mongoose.connect(uri);
         console.log('Base de datos conectada correctamente');
     } catch (error) {
         console.error('Error conectando la base de datos:', error);
