@@ -22,8 +22,7 @@ export const AppRoutes = () => {
             </RoleGuard>
           </ProtectedRoutes>
         }
-      >
-      </Route>
+      ></Route>
     </Routes>
   );
 };

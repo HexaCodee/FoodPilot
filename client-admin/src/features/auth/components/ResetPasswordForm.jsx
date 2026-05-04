@@ -73,7 +73,9 @@ export const ResetPasswordForm = ({ email, token, onSwitch }) => {
           })}
         />
 
-        {errors.newPassword && <p className='text-red-600 text-xs mt-1'>{errors.newPassword.message}</p>}
+        {errors.newPassword && (
+          <p className='text-red-600 text-xs mt-1'>{errors.newPassword.message}</p>
+        )}
       </div>
 
       <div>
@@ -95,7 +97,9 @@ export const ResetPasswordForm = ({ email, token, onSwitch }) => {
           })}
         />
 
-        {errors.confirmPassword && <p className='text-red-600 text-xs mt-1'>{errors.confirmPassword.message}</p>}
+        {errors.confirmPassword && (
+          <p className='text-red-600 text-xs mt-1'>{errors.confirmPassword.message}</p>
+        )}
       </div>
 
       <button

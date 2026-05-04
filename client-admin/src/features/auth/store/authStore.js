@@ -46,7 +46,6 @@ export const useAuthStore = create(
 
           const { data } = await loginRequest({ emailOrUsername, password });
 
-
           // Permitir login a cualquier usuario, guardar el rol para limitar funcionalidades después
 
           set({
@@ -83,6 +82,6 @@ export const useAuthStore = create(
         }
       },
     }),
-    { name: 'auth-KS-IN6AM' }
+    { name: 'auth-FoodPilot' }
   )
 );

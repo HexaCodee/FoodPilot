@@ -16,7 +16,9 @@ export const ForgotPassword = ({ onSwitch }) => {
     try {
       const res = await forgotPassword(data.email);
       if (res?.status === 200 || res?.data?.success) {
-        toast.success('Se han enviado las instrucciones a tu correo electrónico', { duration: 4000 });
+        toast.success('Se han enviado las instrucciones a tu correo electrónico', {
+          duration: 4000,
+        });
       } else {
         const errorMsg = res?.data?.message || 'Error al enviar las instrucciones';
         toast.error(errorMsg);

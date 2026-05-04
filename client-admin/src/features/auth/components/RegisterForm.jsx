@@ -17,7 +17,9 @@ export const RegisterForm = ({ onSwitch }) => {
   const onSubmit = async (data) => {
     const res = await registerUser(data);
     if (res.success) {
-      toast.success('¡Registro exitoso! Revisa tu correo para verificar tu cuenta.', { duration: 4000 });
+      toast.success('¡Registro exitoso! Revisa tu correo para verificar tu cuenta.', {
+        duration: 4000,
+      });
       reset();
       onSwitch();
     } else {
@@ -62,7 +64,10 @@ export const RegisterForm = ({ onSwitch }) => {
           id='password'
           placeholder='********'
           className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
-          {...register('password', { required: 'Este campo es obligatorio', minLength: { value: 8, message: 'Mínimo 8 caracteres' } })}
+          {...register('password', {
+            required: 'Este campo es obligatorio',
+            minLength: { value: 8, message: 'Mínimo 8 caracteres' },
+          })}
         />
         {errors.password && <p className='text-red-600 text-xs mt-1'>{errors.password.message}</p>}
       </div>

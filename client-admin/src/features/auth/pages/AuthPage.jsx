@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { LoginForm } from '../components/LoginForm.jsx';
@@ -10,7 +9,7 @@ export const AuthPage = () => {
   const [searchParams] = useSearchParams();
   const emailParam = searchParams.get('email');
   const tokenParam = searchParams.get('token');
-  
+
   const [view, setView] = useState('login');
 
   useEffect(() => {
@@ -37,11 +36,7 @@ export const AuthPage = () => {
     <div className='min-h-screen flex items-center justify-center bg-gray-50 p-4'>
       <div className='w-full max-w-xl bg-white rounded-xl shadow-lg border border-gray-200 p-6 md:pd-10'>
         <div className='flex justify-center mb-6'>
-          <img
-            src='src/assets/img/avatarDefault.png'
-            alt='Food Pilot'
-            className='h-20 w-auto'
-          />
+          <img src='src/assets/img/avatarDefault.png' alt='Food Pilot' className='h-20 w-auto' />
         </div>
 
         <div className='text-center mb-6'>
@@ -50,16 +45,17 @@ export const AuthPage = () => {
         </div>
 
         {view === 'reset' ? (
-          <ResetPasswordForm email={emailParam} token={tokenParam} onSwitch={() => setView('login')} />
+          <ResetPasswordForm
+            email={emailParam}
+            token={tokenParam}
+            onSwitch={() => setView('login')}
+          />
         ) : view === 'forgot' ? (
           <ForgotPassword onSwitch={() => setView('login')} />
         ) : view === 'register' ? (
           <RegisterForm onSwitch={() => setView('login')} />
         ) : (
-          <LoginForm
-            onForgot={() => setView('forgot')}
-            onRegister={() => setView('register')}
-          />
+          <LoginForm onForgot={() => setView('forgot')} onRegister={() => setView('register')} />
         )}
       </div>
     </div>
