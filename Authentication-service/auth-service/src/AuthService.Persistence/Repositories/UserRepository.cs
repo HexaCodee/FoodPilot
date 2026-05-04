@@ -75,12 +75,44 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
                                     u.UserPasswordReset.PasswordResetTokenExpiry > DateTime.UtcNow);
     }
 
-    // Crear nuevo usuario
+// Crear nuevo usuario
     public async Task<User> CreateAsync(User user)
     {
         context.Users.Add(user);
         await context.SaveChangesAsync();
         return await GetByIdAsync(user.Id);
+    }
+
+    // Guardar cambios sin recargar - para operaciones simples
+    public async Task SaveChangesAsync()
+    {
+        await context.SaveChangesAsync();
+    }
+
+    // Agregar password reset directamente
+    public async Task AddPasswordResetAsync(UserPasswordReset passwordReset)
+    {
+        context.UserPasswordResets.Add(passwordReset);
+        await context.SaveChangesAsync();
+    }
+
+    // Actualizar password reset existente
+    public async Task UpdatePasswordResetAsync(UserPasswordReset passwordReset)
+    {
+        var existing = await context.UserPasswordResets
+            .FirstOrDefaultAsync(pr => pr.UserId == passwordReset.UserId);
+        
+        if (existing != null)
+        {
+            existing.PasswordResetToken = passwordReset.PasswordResetToken;
+            existing.PasswordResetTokenExpiry = passwordReset.PasswordResetTokenExpiry;
+        }
+        else
+        {
+            context.UserPasswordResets.Add(passwordReset);
+        }
+        
+        await context.SaveChangesAsync();
     }
 
     // Actualizar usuario existente
