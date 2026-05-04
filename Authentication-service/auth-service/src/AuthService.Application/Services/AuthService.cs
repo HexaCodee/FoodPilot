@@ -320,25 +320,18 @@ public class AuthService(
 
         // Generar token de reset
         var resetToken = TokenGenerator.GeneratePasswordResetToken();
-
-        if (user.UserPasswordReset == null)
+        
+        var passwordReset = new UserPasswordReset
         {
-            user.UserPasswordReset = new UserPasswordReset
-            {
-                UserId = user.Id,
-                PasswordResetToken = resetToken,
-                PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1)
-            };
-        }
-        else
-        {
-            user.UserPasswordReset.PasswordResetToken = resetToken;
-            user.UserPasswordReset.PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1); // 1 hora para resetear
-        }
+            UserId = user.Id,
+            PasswordResetToken = resetToken,
+            PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1)
+        };
 
-        await userRepository.UpdateAsync(user);
+        // Guardar usando el método directo
+        await userRepository.UpdatePasswordResetAsync(passwordReset);
 
-        // Enviar email
+        // Enviar email (si falla, continuar con éxito por seguridad)
         try
         {
             await emailService.SendPasswordResetAsync(user.Email, user.Username, resetToken);
@@ -372,9 +365,13 @@ public class AuthService(
 
         // Actualizar contraseña
         user.Password = passwordHashService.HashPassword(resetPasswordDto.NewPassword);
+        
+        // Primero limpiar el reset de contraseña
         user.UserPasswordReset.PasswordResetToken = null;
         user.UserPasswordReset.PasswordResetTokenExpiry = null;
-
+        
+        // Guardar usando método directo
+        await userRepository.UpdatePasswordResetAsync(user.UserPasswordReset);
         await userRepository.UpdateAsync(user);
 
         logger.LogInformation("Password reset successfully for user {Username}", user.Username);

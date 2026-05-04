@@ -30,7 +30,7 @@ public class AuthController(IAuthService authService) : ControllerBase
     /// <param name="loginDto">Objeto con email y contraseña del usuario</param>
     /// <returns>Token JWT y datos del usuario autenticado</returns>
     /// <response code="200">Login exitoso. Devuelve token JWT y datos del usuario.</response>
-    /// <response code="400">Credenciales inválidas o datos incompletos.</response>
+    /// <response code="400">Credenciales inválidas o datos incompletas.</response>
     /// <response code="429">Límite de rate limiting excedido.</response>
     /// <response code="500">Error interno del servidor.</response>
     [HttpPost("login")]
@@ -107,6 +107,58 @@ public class AuthController(IAuthService authService) : ControllerBase
     public async Task<ActionResult<EmailResponseDto>> VerifyEmail([FromBody] VerifyEmailDto verifyEmailDto)
     {
         var result = await authService.VerifyEmailAsync(verifyEmailDto);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Solicita recuperación de contraseña.
+    /// </summary>
+    /// <remarks>
+    /// Envía un email con enlace para restablecer la contraseña.
+    /// 
+    /// - El enlace tiene validez de 1 hora
+    /// - Por seguridad, siempre devuelve éxito aunque el email no exista
+    /// </remarks>
+    /// <param name="forgotPasswordDto">Objeto con email del usuario</param>
+    /// <returns>Confirmación del envío del email de recuperación</returns>
+    /// <response code="200">Email de recuperación enviado (si el usuario existe).</response>
+    /// <response code="400">Datos inválidos.</response>
+    /// <response code="500">Error interno del servidor.</response>
+    [HttpPost("forgot-password")]
+    [EnableRateLimiting("ApiPolicy")]
+    [SwaggerOperation(
+        Summary = "Solicita recuperación de contraseña",
+        Description = "Envía un email con enlace para restablecer la contraseña"
+    )]
+    public async Task<ActionResult<EmailResponseDto>> ForgotPassword([FromBody] ForgotPasswordDto forgotPasswordDto)
+    {
+        var result = await authService.ForgotPasswordAsync(forgotPasswordDto);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Restablece la contraseña.
+    /// </summary>
+    /// <remarks>
+    /// Utiliza el token enviado al email del usuario para restablecer la contraseña.
+    /// 
+    /// - El token tiene validez de 1 hora
+    /// - La contraseña debe tener mínimo 8 caracteres
+    /// </remarks>
+    /// <param name="resetPasswordDto">Objeto con token y nueva contraseña</param>
+    /// <returns>Confirmación del restablecimiento</returns>
+    /// <response code="200">Contraseña actualizada exitosamente.</response>
+    /// <response code="400">Token inválido, expirado o contraseña inválida.</response>
+    /// <response code="500">Error interno del servidor.</response>
+[HttpPost("reset-password")]
+    [EnableRateLimiting("ApiPolicy")]
+    [SwaggerOperation(
+        Summary = "Restablece la contraseña",
+        Description = "Utiliza el token para restablecer la contraseña"
+    )]
+    public async Task<ActionResult<EmailResponseDto>> ResetPassword([FromBody] ResetPasswordDto resetPasswordDto)
+    {
+        var result = await authService.ResetPasswordAsync(resetPasswordDto);
         return Ok(result);
     }
 }

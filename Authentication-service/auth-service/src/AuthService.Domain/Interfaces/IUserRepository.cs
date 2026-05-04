@@ -4,7 +4,7 @@ namespace AuthService.Domain.Interfaces;
 
 public interface IUserRepository
 {
-    Task<User> CreateAsync(User user); //Crea un usuario y devuelve el usuario
+    Task<User> CreateAsync(User user);
     Task<User> GetByIdAsync(string id);
     Task<User?> GetByEmailAsync(string email);
     Task<User?> GetByUsernameAsync(string username);
@@ -13,6 +13,8 @@ public interface IUserRepository
     Task<bool> ExistsByEmailAsync(string email);
     Task<bool> ExistsByUsernameAsync(string username);
     Task<User> UpdateAsync(User user);
+    Task AddPasswordResetAsync(UserPasswordReset passwordReset);
+    Task UpdatePasswordResetAsync(UserPasswordReset passwordReset);
     Task<bool> DeleteAsync(string id);
     Task UpdateUserRoleAsync(string userId, string roleId);
 }
