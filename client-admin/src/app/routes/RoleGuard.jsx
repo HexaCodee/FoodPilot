@@ -2,13 +2,14 @@ import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '../../features/auth/store/authStore';
 
 export const RoleGuard = ({ children, allowedRoles = [] }) => {
-  const user = useAuthStore((state) => state.user);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const getDashboardPath = useAuthStore((s) => s.getDashboardPath);
 
-  const hasAccess = isAuthenticated && allowedRoles.includes(user?.role);
+  if (!isAuthenticated) return <Navigate to='/' replace />;
 
-  if (!hasAccess) {
-    return <Navigate to='/' replace />;
+  if (!allowedRoles.includes(user?.role)) {
+    return <Navigate to={getDashboardPath()} replace />;
   }
 
   return children;

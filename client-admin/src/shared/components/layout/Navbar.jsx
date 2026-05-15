@@ -1,43 +1,63 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../../features/auth/store/authStore';
-import imgLogo from '../../../assets/img/avatarDefault.png';
+import { MenuIcon, BellIcon, UserIcon } from '../ui/Icons.jsx';
 
-export const Navbar = () => {
-  const navigate = useNavigate();
-  const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
+const PAGE_TITLES = {
+  // Admin
+  '/dashboard/admin':              'Panel General',
+  '/dashboard/admin/users':        'Gestión de Usuarios',
+  '/dashboard/admin/restaurants':  'Restaurantes',
+  '/dashboard/admin/events':       'Eventos',
+  '/dashboard/admin/reports':      'Reportes',
+  // Restaurant
+  '/dashboard/restaurant':               'Mi Restaurante',
+  '/dashboard/restaurant/tables':        'Mesas',
+  '/dashboard/restaurant/menu':          'Menú',
+  '/dashboard/restaurant/orders':        'Pedidos',
+  '/dashboard/restaurant/reservaciones': 'Reservaciones',
+  '/dashboard/restaurant/reservations':  'Reservaciones',
+  '/dashboard/restaurant/reports':       'Reportes',
+  // Client
+  '/dashboard/client':               'Explorar Restaurantes',
+  '/dashboard/client/reservations':  'Mis Reservaciones',
+  '/dashboard/client/orders':        'Mis Pedidos',
+  '/dashboard/client/profile':       'Mi Perfil',
+};
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+export const Navbar = ({ onMenuClick }) => {
+  const { pathname } = useLocation();
+  const user = useAuthStore((s) => s.user);
+  const title = PAGE_TITLES[pathname] ?? 'FoodPilot';
 
   return (
-    <nav className="bg-white shadow-md px-4 py-2 flex items-center justify-between sticky top-0 z-50">
+    <header className="h-14 bg-fp-sidebar border-b border-fp-border flex items-center justify-between px-4 flex-shrink-0">
+      {/* Left: hamburger + title */}
       <div className="flex items-center gap-3">
-        <img src={imgLogo} alt="Logo" className="h-10 w-10 rounded-full object-cover" />
-        <span className="font-bold text-xl text-main-blue">FoodPilot</span>
-      </div>
-      <div className="hidden md:flex gap-6 items-center">
-        <Link to="/home" className="hover:text-main-blue font-medium transition-colors">Inicio</Link>
-        <Link to="/restaurants" className="hover:text-main-blue font-medium transition-colors">Restaurantes</Link>
-        <Link to="/tables" className="hover:text-main-blue font-medium transition-colors">Mesas</Link>
-        <Link to="/menus" className="hover:text-main-blue font-medium transition-colors">Menús</Link>
-        <Link to="/orders" className="hover:text-main-blue font-medium transition-colors">Pedidos</Link>
-        <Link to="/events" className="hover:text-main-blue font-medium transition-colors">Eventos</Link>
-        <Link to="/reports" className="hover:text-main-blue font-medium transition-colors">Reportes</Link>
-      </div>
-      <div className="flex items-center gap-4">
-        {user && (
-          <span className="text-gray-700 font-semibold max-w-[120px] truncate">{user.name}</span>
-        )}
         <button
-          onClick={handleLogout}
-          className="bg-main-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          onClick={onMenuClick}
+          className="lg:hidden text-fp-muted hover:text-fp-text p-1.5 rounded-lg hover:bg-fp-elevated transition-colors"
         >
-          Cerrar sesión
+          <MenuIcon className="w-5 h-5" />
         </button>
+        <h2 className="text-fp-text font-medium text-sm">{title}</h2>
       </div>
-    </nav>
+
+      {/* Right: bell + user */}
+      <div className="flex items-center gap-1">
+        <button className="p-2 rounded-lg text-fp-muted hover:text-fp-text hover:bg-fp-elevated transition-colors relative">
+          <BellIcon className="w-4.5 h-4.5" />
+          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-fp-gold rounded-full" />
+        </button>
+
+        <div className="flex items-center gap-2 ml-2 pl-3 border-l border-fp-border">
+          <div className="w-7 h-7 rounded-full bg-fp-gold-dim border border-fp-gold/30 flex items-center justify-center">
+            <UserIcon className="w-3.5 h-3.5 text-fp-gold" />
+          </div>
+          <span className="text-fp-text text-sm font-medium hidden sm:block max-w-28 truncate">
+            {user?.username ?? 'Usuario'}
+          </span>
+        </div>
+      </div>
+    </header>
   );
 };

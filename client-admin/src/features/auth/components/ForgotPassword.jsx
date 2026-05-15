@@ -4,70 +4,57 @@ import { forgotPassword } from '../../../shared/apis';
 import toast from 'react-hot-toast';
 
 export const ForgotPassword = ({ onSwitch }) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm();
+  const [loading, setLoading] = useState(false);
+
+  const { register, handleSubmit, formState: { errors } } = useForm();
 
   const onSubmit = async (data) => {
-    setIsLoading(true);
+    setLoading(true);
     try {
       const res = await forgotPassword(data.email);
       if (res?.status === 200 || res?.data?.success) {
-        toast.success('Se han enviado las instrucciones a tu correo electrónico', { duration: 4000 });
+        toast.success('Si el correo existe, recibirás las instrucciones pronto.', { duration: 5000 });
+        onSwitch();
       } else {
-        const errorMsg = res?.data?.message || 'Error al enviar las instrucciones';
-        toast.error(errorMsg);
+        toast.error(res?.data?.message ?? 'Error al enviar instrucciones');
       }
-    } catch (err) {
-      const errorMsg = err?.response?.data?.message || 'Error al conectar con el servidor';
-      toast.error(errorMsg);
+    } catch {
+      toast.error('Error al conectar con el servidor');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className='space-y-5'>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <label htmlFor='email' className='block text-sm font-medium text-gray-800 mb-1.5'>
-          Email
+        <label className="block text-xs font-medium text-fp-muted mb-1.5 uppercase tracking-wide">
+          Correo electrónico
         </label>
-
         <input
-          type='email'
-          id='email'
-          placeholder='email@example.com'
-          className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500'
+          type="email"
+          placeholder="correo@ejemplo.com"
+          className="w-full bg-fp-elevated border border-fp-border text-fp-text placeholder-fp-subtle rounded-lg px-3.5 py-2.5 text-sm focus:outline-none focus:border-fp-gold focus:ring-1 focus:ring-fp-gold/50 transition-colors"
           {...register('email', {
             required: 'Este campo es obligatorio',
-            pattern: {
-              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: 'Email inválido',
-            },
+            pattern: { value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, message: 'Email inválido' },
           })}
         />
-
-        {errors.email && <p className='text-red-600 text-xs mt-1'>{errors.email.message}</p>}
+        {errors.email && <p className="text-fp-danger text-xs mt-1">{errors.email.message}</p>}
       </div>
 
       <button
-        type='submit'
-        disabled={isLoading}
-        className='w-full bg-main-blue hover:opacity-90 text-white font-medium py-2.5 px-4 rounded-lg transition-colors duration-200 text-sm disabled:opacity-60'
+        type="submit"
+        disabled={loading}
+        className="w-full bg-fp-gold hover:bg-fp-gold-hover text-fp-bg font-semibold py-2.5 rounded-lg transition-colors text-sm disabled:opacity-50"
       >
-        {isLoading ? 'Enviando...' : 'Enviar Instrucciones'}
+        {loading ? 'Enviando...' : 'Enviar instrucciones'}
       </button>
-      <p className='text-center text-sm'>
+
+      <p className="text-center text-fp-subtle text-xs">
         ¿Recordaste tu contraseña?{' '}
-        <button
-          type='button'
-          onClick={onSwitch}
-          className='text-main-blue hover:underline hover:cursor-pointer'
-        >
-          Iniciar Sesión
+        <button type="button" onClick={onSwitch} className="text-fp-gold hover:underline font-medium">
+          Iniciar sesión
         </button>
       </p>
     </form>
