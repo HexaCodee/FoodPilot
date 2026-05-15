@@ -1,7 +1,14 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { login as loginRequest, register as registerRequest } from '../../../shared/apis';
-import { showError } from '../../../shared/utils/toast.js';
+
+const VALID_ROLES = ['CLIENT', 'RESTAURANT_ADMIN', 'PLATFORM_ADMIN'];
+
+const getDashboardPath = (role) => {
+  if (role === 'PLATFORM_ADMIN') return '/dashboard/admin';
+  if (role === 'RESTAURANT_ADMIN') return '/dashboard/restaurant';
+  return '/dashboard/client';
+};
 
 export const useAuthStore = create(
   persist(
@@ -14,7 +21,7 @@ export const useAuthStore = create(
       error: null,
       isLoadingAuth: true,
       isAuthenticated: false,
-      // Función para validar el token y el rol del usuario
+
       checkAuth: () => {
         try {
           const token = get().token;
@@ -23,13 +30,15 @@ export const useAuthStore = create(
             return;
           }
           const role = get().user?.role;
-          const isAdmin = role === 'ADMIN_ROLE';
-          set({ isLoadingAuth: false, isAuthenticated: Boolean(token) && isAdmin });
+          const valid = Boolean(token) && VALID_ROLES.includes(role);
+          set({ isLoadingAuth: false, isAuthenticated: valid });
         } catch {
           set({ isLoadingAuth: false, isAuthenticated: false });
         }
       },
-      // Función para cerrar sesión
+
+      getDashboardPath: () => getDashboardPath(get().user?.role),
+
       logout: () => {
         set({
           user: null,
@@ -39,16 +48,11 @@ export const useAuthStore = create(
           isAuthenticated: false,
         });
       },
-      // Función para iniciar sesión
+
       login: async ({ emailOrUsername, password }) => {
         try {
           set({ loading: true, error: null });
-
           const { data } = await loginRequest({ emailOrUsername, password });
-
-
-          // Permitir login a cualquier usuario, guardar el rol para limitar funcionalidades después
-
           set({
             user: data.userDetails,
             token: data.accessToken,
@@ -57,9 +61,9 @@ export const useAuthStore = create(
             isAuthenticated: true,
             loading: false,
           });
-          return { success: true };
+          return { success: true, dashboardPath: getDashboardPath(data.userDetails?.role) };
         } catch (err) {
-          const message = err.response?.data?.message || 'Error al iniciar sesión';
+          const message = err.response?.data?.message || 'Credenciales inválidas';
           set({ error: message, loading: false });
           return { success: false, error: message };
         }
@@ -70,10 +74,7 @@ export const useAuthStore = create(
         try {
           const res = await registerRequest(formData);
           set({ loading: false });
-
-          if (res?.data) {
-            return { success: true, data: res.data };
-          }
+          if (res?.data) return { success: true, data: res.data };
           return { success: true };
         } catch (err) {
           set({ loading: false });
@@ -83,6 +84,6 @@ export const useAuthStore = create(
         }
       },
     }),
-    { name: 'auth-KS-IN6AM' }
+    { name: 'foodpilot-auth' }
   )
 );
