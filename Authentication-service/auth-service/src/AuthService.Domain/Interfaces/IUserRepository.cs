@@ -17,4 +17,6 @@ public interface IUserRepository
     Task UpdatePasswordResetAsync(UserPasswordReset passwordReset);
     Task<bool> DeleteAsync(string id);
     Task UpdateUserRoleAsync(string userId, string roleId);
+    Task<(IReadOnlyList<User> Users, int Total)> GetAllAsync(string? search, string? role, int page, int limit);
+    Task<User> UpdateStatusAsync(string userId, bool status);
 }

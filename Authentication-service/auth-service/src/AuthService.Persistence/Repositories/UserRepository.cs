@@ -146,6 +146,53 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
             .AnyAsync(u => EF.Functions.ILike(u.Username, username));
     }
 
+    // Obtener todos los usuarios con filtros y paginación
+    public async Task<(IReadOnlyList<User> Users, int Total)> GetAllAsync(string? search, string? role, int page, int limit)
+    {
+        var query = context.Users
+            .Include(u => u.UserProfile)
+            .Include(u => u.UserEmail)
+            .Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
+            .AsQueryable();
+
+        // Filtrar por rol si se especifica
+        if (!string.IsNullOrWhiteSpace(role))
+        {
+            var normalizedRole = role.Trim().ToUpperInvariant();
+            query = query.Where(u => u.UserRoles.Any(ur => ur.Role.Name == normalizedRole));
+        }
+
+        // Filtrar por búsqueda (nombre, apellido, username o email)
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLowerInvariant();
+            query = query.Where(u =>
+                u.Name.ToLower().Contains(term) ||
+                u.Surname.ToLower().Contains(term) ||
+                u.Username.ToLower().Contains(term) ||
+                u.Email.ToLower().Contains(term));
+        }
+
+        var total = await query.CountAsync();
+        var users = await query
+            .OrderByDescending(u => u.CreatedAt)
+            .Skip((page - 1) * limit)
+            .Take(limit)
+            .ToListAsync();
+
+        return (users, total);
+    }
+
+    // Activar o desactivar usuario
+    public async Task<User> UpdateStatusAsync(string userId, bool status)
+    {
+        var user = await GetByIdAsync(userId);
+        user.Status = status;
+        user.UpdatedAt = DateTime.UtcNow;
+        await context.SaveChangesAsync();
+        return await GetByIdAsync(userId);
+    }
+
     // Actualizar rol de usuario
     public async Task UpdateUserRoleAsync(string userId, string roleId)
     {

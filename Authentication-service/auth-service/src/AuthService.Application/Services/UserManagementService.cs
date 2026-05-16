@@ -88,5 +88,56 @@ public class UserManagementService(IUserRepository users, IRoleRepository roles)
         }).ToList();
     }
 
-    
+    public async Task<(IReadOnlyList<UserResponseDto> Users, int Total)> GetAllUsersAsync(string? search, string? role, int page, int limit)
+    {
+        if (page < 1) page = 1;
+        if (limit < 1 || limit > 100) limit = 20;
+
+        var (rawUsers, total) = await users.GetAllAsync(search, role, page, limit);
+
+        var dtos = rawUsers.Select(u =>
+        {
+            var primaryRole = u.UserRoles.FirstOrDefault()?.Role?.Name ?? string.Empty;
+            return new UserResponseDto
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Surname = u.Surname,
+                Username = u.Username,
+                Email = u.Email,
+                Phone = u.UserProfile?.Phone ?? string.Empty,
+                Role = primaryRole,
+                Status = u.Status,
+                IsEmailVerified = u.UserEmail?.EmailVerified ?? false,
+                CreatedAt = u.CreatedAt,
+                UpdatedAt = u.UpdatedAt
+            };
+        }).ToList();
+
+        return (dtos, total);
+    }
+
+    public async Task<UserResponseDto> UpdateUserStatusAsync(string userId, bool status)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new ArgumentException("Invalid userId", nameof(userId));
+
+        var user = await users.UpdateStatusAsync(userId, status);
+        var primaryRole = user.UserRoles.FirstOrDefault()?.Role?.Name ?? string.Empty;
+
+        return new UserResponseDto
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Surname = user.Surname,
+            Username = user.Username,
+            Email = user.Email,
+            Phone = user.UserProfile?.Phone ?? string.Empty,
+            Role = primaryRole,
+            Status = user.Status,
+            IsEmailVerified = user.UserEmail?.EmailVerified ?? false,
+            CreatedAt = user.CreatedAt,
+            UpdatedAt = user.UpdatedAt
+        };
+    }
 }

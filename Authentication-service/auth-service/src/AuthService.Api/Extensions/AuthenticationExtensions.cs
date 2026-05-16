@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 namespace AuthService.Api.Extensions;
@@ -18,6 +19,8 @@ public static class AuthenticationExtensions
         })
         .AddJwtBearer(options =>
         {
+            // Disable claim remapping so JWT claim names stay as-is ("role", "sub", etc.)
+            options.MapInboundClaims = false;
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
@@ -27,7 +30,9 @@ public static class AuthenticationExtensions
                 ValidIssuer = jwtSettings["Issuer"],
                 ValidAudience = jwtSettings["Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
-                ClockSkew = TimeSpan.Zero
+                ClockSkew = TimeSpan.Zero,
+                RoleClaimType = "role",
+                NameClaimType = JwtRegisteredClaimNames.Sub
             };
         });
 
