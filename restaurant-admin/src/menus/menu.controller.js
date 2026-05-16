@@ -27,8 +27,8 @@ export const createMenuController = async (req, res) => {
 // Obtener todos los menús con paginación y filtros
 export const getMenusController = async (req, res) => {
     try {
-        const { page = 1, limit = 10, isAvailable = true } = req.query;
-        const { menus, pagination } = await fetchMenus({ page, limit, isAvailable });
+        const { page = 1, limit = 10, isAvailable = true, restaurant, category, search } = req.query;
+        const { menus, pagination } = await fetchMenus({ page, limit, isAvailable, restaurant, category, search });
         res.status(200).json({
             success: true,
             data: menus,

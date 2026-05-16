@@ -31,8 +31,8 @@ export const createRestaurantController = async (req, res) => {
 // Obtener todos los restaurantes con paginación y filtros
 export const getRestaurantsController = async (req, res) => {
     try {
-        const { page = 1, limit = 10, isActive = true } = req.query;
-        const { restaurants, pagination } = await fetchRestaurants({ page, limit, isActive });
+        const { page = 1, limit = 10, isActive = true, category, search } = req.query;
+        const { restaurants, pagination } = await fetchRestaurants({ page, limit, isActive, category, search });
         res.status(200).json({
             success: true,
             data: restaurants,
