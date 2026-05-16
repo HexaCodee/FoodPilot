@@ -1,29 +1,46 @@
 import Menu from './menu.model.js';
 
 export const createMenu = async (menuData) => {
-    try {
-        const data = { ...menuData };
-        const menu = new Menu(data);
-        await menu.save();
-        return menu;
-    } catch (error) {
-        throw error;
-    }
+    const menu = new Menu(menuData);
+    await menu.save();
+    return menu;
 };
 
+// Obtener menús con paginación y filtros
+export const fetchMenus = async ({ page = 1, limit = 10, isAvailable, restaurant, category, search } = {}) => {
+    const filter = {};
 
-// Obtener todos los menús con paginación y filtros
-export const fetchMenus = async ({ page = 1, limit = 10, isAvailable = true }) => {
-    const filter = { isAvailable };
-    const pageNumber = parseInt(page);
-    const limitNumber = parseInt(limit);
+    // Filtro de disponibilidad (por defecto solo disponibles)
+    if (isAvailable === 'all') {
+        // sin filtro
+    } else if (isAvailable === 'false' || isAvailable === false) {
+        filter.isAvailable = false;
+    } else {
+        filter.isAvailable = true;
+    }
 
-    const menus = await Menu.find(filter)
-        .limit(limitNumber)
-        .skip((pageNumber - 1) * limitNumber)
-        .sort({ createdAt: -1 });
+    // Filtro por restaurante (esencial para el admin de restaurante)
+    if (restaurant) filter.restaurant = restaurant;
 
-    const total = await Menu.countDocuments(filter);
+    // Filtro por categoría
+    if (category) filter.category = category;
+
+    // Búsqueda por nombre
+    if (search) {
+        filter.name = { $regex: search, $options: 'i' };
+    }
+
+    const pageNumber  = Math.max(1, parseInt(page));
+    const limitNumber = Math.min(100, Math.max(1, parseInt(limit)));
+
+    const [menus, total] = await Promise.all([
+        Menu.find(filter)
+            .populate('restaurant', 'name category')
+            .sort({ category: 1, name: 1 })
+            .skip((pageNumber - 1) * limitNumber)
+            .limit(limitNumber),
+        Menu.countDocuments(filter),
+    ]);
 
     return {
         menus,
@@ -38,7 +55,7 @@ export const fetchMenus = async ({ page = 1, limit = 10, isAvailable = true }) =
 
 // Obtener menú por ID
 export const fetchMenuById = async (id) => {
-    return Menu.findById(id);
+    return Menu.findById(id).populate('restaurant', 'name category');
 };
 
 // Actualizar menú
@@ -49,7 +66,7 @@ export const updateMenu = async ({ id, updateData }) => {
     });
 };
 
-// Cambiar estado del menú (activar/desactivar)
+// Cambiar disponibilidad del menú
 export const updateMenuStatus = async ({ id, isAvailable }) => {
     return Menu.findByIdAndUpdate(id, { isAvailable }, { new: true });
 };

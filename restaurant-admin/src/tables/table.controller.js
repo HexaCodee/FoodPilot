@@ -31,8 +31,8 @@ export const createTableController = async (req, res) => {
 // Obtener todas las mesas con paginación y filtros
 export const getTablesController = async (req, res) => {
     try {
-        const { page = 1, limit = 10, isAvailable = true } = req.query;
-        const { tables, pagination } = await fetchTables({ page, limit, isAvailable });
+        const { page = 1, limit = 10, isAvailable = true, restaurant, status, location } = req.query;
+        const { tables, pagination } = await fetchTables({ page, limit, isAvailable, restaurant, status, location });
         res.status(200).json({
             success: true,
             data: tables,
