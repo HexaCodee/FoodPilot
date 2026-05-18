@@ -1,5 +1,9 @@
-export { axiosAuth, axiosAdmin, handleRefreshToken } from './api.js';
+export { axiosAuth, axiosAdmin, axiosOrders, axiosEvents, handleRefreshToken } from './api.js';
 export * from './api.js';
 export * from './auth.js';
 export * from './users.js';
 export * from './restaurants.js';
+export * from './tables.js';
+export * from './menus.js';
+export * from './orders.js';
+export * from './reservations.js';

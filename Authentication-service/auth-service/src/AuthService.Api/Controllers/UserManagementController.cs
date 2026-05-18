@@ -31,7 +31,7 @@ public class UserManagementController(IUserManagementService userManagement) : C
     /// </summary>
     [HttpGet]
     [SwaggerOperation(Summary = "Listar usuarios", Description = "Devuelve todos los usuarios con paginación y filtros")]
-    public async Task<ActionResult<UserListResponseDto>> GetUsers(
+    public async Task<IActionResult> GetUsers(
         [FromQuery] string? search = null,
         [FromQuery] string? role = null,
         [FromQuery] int page = 1,
@@ -57,7 +57,7 @@ public class UserManagementController(IUserManagementService userManagement) : C
     /// </summary>
     [HttpPut("{id}/role")]
     [SwaggerOperation(Summary = "Cambiar rol de usuario")]
-    public async Task<ActionResult<UserResponseDto>> UpdateRole(string id, [FromBody] UpdateUserRoleDto dto)
+    public async Task<IActionResult> UpdateRole(string id, [FromBody] UpdateUserRoleDto dto)
     {
         if (GetUserRole() != RoleConstants.PLATFORM_ADMIN) return ForbiddenResponse();
         var result = await userManagement.UpdateUserRoleAsync(id, dto.RoleName);
@@ -69,7 +69,7 @@ public class UserManagementController(IUserManagementService userManagement) : C
     /// </summary>
     [HttpPut("{id}/activate")]
     [SwaggerOperation(Summary = "Activar usuario")]
-    public async Task<ActionResult<UserResponseDto>> ActivateUser(string id)
+    public async Task<IActionResult> ActivateUser(string id)
     {
         if (GetUserRole() != RoleConstants.PLATFORM_ADMIN) return ForbiddenResponse();
         var result = await userManagement.UpdateUserStatusAsync(id, true);
@@ -81,7 +81,7 @@ public class UserManagementController(IUserManagementService userManagement) : C
     /// </summary>
     [HttpPut("{id}/deactivate")]
     [SwaggerOperation(Summary = "Desactivar usuario")]
-    public async Task<ActionResult<UserResponseDto>> DeactivateUser(string id)
+    public async Task<IActionResult> DeactivateUser(string id)
     {
         if (GetUserRole() != RoleConstants.PLATFORM_ADMIN) return ForbiddenResponse();
         var result = await userManagement.UpdateUserStatusAsync(id, false);
