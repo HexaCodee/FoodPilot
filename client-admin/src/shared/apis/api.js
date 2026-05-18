@@ -27,6 +27,18 @@ const axiosAdmin = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const axiosOrders = axios.create({
+  baseURL: import.meta.env.VITE_ORDERS_URL,
+  timeout: 5000,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+const axiosEvents = axios.create({
+  baseURL: import.meta.env.VITE_EVENTS_URL,
+  timeout: 5000,
+  headers: { 'Content-Type': 'application/json' },
+});
+
 // ── Request interceptors (attach token) ───────────────────────────────────────
 const attachToken = (clientName) => (config) => {
   config._axiosClient = clientName;
@@ -37,6 +49,8 @@ const attachToken = (clientName) => (config) => {
 
 axiosAuth.interceptors.request.use(attachToken('auth'));
 axiosAdmin.interceptors.request.use(attachToken('admin'));
+axiosOrders.interceptors.request.use(attachToken('orders'));
+axiosEvents.interceptors.request.use(attachToken('events'));
 
 // ── Refresh-token logic ───────────────────────────────────────────────────────
 let _isRefreshing = false;
@@ -61,7 +75,8 @@ const handleRefreshToken = async (error) => {
 
   if (!shouldRefresh) return Promise.reject(error);
 
-  const retryClient = original._axiosClient === 'admin' ? axiosAdmin : axiosAuth;
+  const clientMap = { admin: axiosAdmin, orders: axiosOrders, events: axiosEvents };
+  const retryClient = clientMap[original._axiosClient] ?? axiosAuth;
 
   if (_isRefreshing) {
     return new Promise((resolve, reject) => {
@@ -101,6 +116,8 @@ const handleRefreshToken = async (error) => {
 
 axiosAuth.interceptors.response.use((res) => res, handleRefreshToken);
 axiosAdmin.interceptors.response.use((res) => res, handleRefreshToken);
+axiosOrders.interceptors.response.use((res) => res, handleRefreshToken);
+axiosEvents.interceptors.response.use((res) => res, handleRefreshToken);
 
-export { axiosAuth, axiosAdmin };
+export { axiosAuth, axiosAdmin, axiosOrders, axiosEvents };
 export { handleRefreshToken };

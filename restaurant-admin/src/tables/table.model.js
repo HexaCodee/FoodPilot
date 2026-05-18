@@ -45,12 +45,11 @@ const tableSchema = new Schema({
 });
 
 // Sync isAvailable with status automatically
-tableSchema.pre('save', function (next) {
+tableSchema.pre('save', async function () {
     this.isAvailable = this.status === 'DISPONIBLE';
-    next();
 });
 
-tableSchema.pre('findOneAndUpdate', function (next) {
+tableSchema.pre('findOneAndUpdate', async function () {
     const update = this.getUpdate();
     if (update.status) {
         update.isAvailable = update.status === 'DISPONIBLE';
@@ -58,7 +57,6 @@ tableSchema.pre('findOneAndUpdate', function (next) {
     if (typeof update.isAvailable === 'boolean' && !update.status) {
         update.status = update.isAvailable ? 'DISPONIBLE' : 'FUERA_DE_SERVICIO';
     }
-    next();
 });
 
 tableSchema.index({ restaurant: 1 });
