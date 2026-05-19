@@ -2,8 +2,8 @@ import { axiosAdmin } from './api.js';
 
 const BASE = '/menus';
 
-export const getMenus = ({ restaurant, category, page = 1, limit = 50 } = {}) => {
-  const params = { page, limit };
+export const getMenus = ({ restaurant, category, page = 1, limit = 50, isAvailable = 'all' } = {}) => {
+  const params = { page, limit, isAvailable };
   if (restaurant) params.restaurant = restaurant;
   if (category && category !== 'all') params.category = category;
   return axiosAdmin.get(BASE, { params });

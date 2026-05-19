@@ -37,6 +37,9 @@ logs/
 .DS_Store
 Thumbs.db
 
+## [Local dev scripts]
+start-dev.ps1
+
 ## [NuGet]
 **/packages/
 *.nupkg
