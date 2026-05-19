@@ -1,62 +1,139 @@
-import { BuildingIcon, CalendarIcon, BagIcon, StarIcon, MapPinIcon } from '../../../shared/components/ui/Icons.jsx';
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useAuthStore }    from '../../auth/store/authStore.js';
+import { getRestaurants }  from '../../../shared/apis/restaurants.js';
+import { getOrders }       from '../../../shared/apis/orders.js';
+import { getReservations } from '../../../shared/apis/reservations.js';
+import {
+  BuildingIcon, CalendarIcon, BagIcon,
+  StarIcon, MapPinIcon,
+} from '../../../shared/components/ui/Icons.jsx';
 
-const RestaurantCard = ({ name, category, rating, location }) => (
-  <div className="bg-fp-surface border border-fp-border rounded-xl p-4 hover:border-fp-gold/30 transition-colors cursor-pointer group">
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const Skeleton = ({ className = '' }) => (
+  <div className={`animate-pulse bg-fp-elevated rounded ${className}`} />
+);
+
+const StatCard = ({ Icon, label, value, loading, to }) => {
+  const content = (
+    <div className="bg-fp-surface border border-fp-border rounded-xl p-5 hover:border-fp-gold/25 transition-colors h-full">
+      <div className="p-2.5 rounded-lg bg-fp-gold-dim w-fit mb-3">
+        <Icon className="w-5 h-5 text-fp-gold" />
+      </div>
+      <p className="text-fp-muted text-xs uppercase tracking-wide mb-1">{label}</p>
+      {loading
+        ? <Skeleton className="h-8 w-16 mt-1" />
+        : <p className="text-fp-text text-2xl font-semibold">{value ?? '—'}</p>}
+    </div>
+  );
+  return to ? <Link to={to} className="block">{content}</Link> : content;
+};
+
+const RestaurantCard = ({ restaurant }) => (
+  <div className="bg-fp-surface border border-fp-border rounded-xl p-4 hover:border-fp-gold/30 transition-colors group">
     <div className="flex items-start justify-between mb-2">
+      <div className="flex-1 min-w-0">
+        <h4 className="text-fp-text text-sm font-medium group-hover:text-fp-gold transition-colors truncate">
+          {restaurant.name}
+        </h4>
+        <span className="text-fp-subtle text-xs">{restaurant.category}</span>
+      </div>
+      <span className="flex-shrink-0 ml-2 flex items-center gap-1">
+        <StarIcon className="w-3.5 h-3.5 text-fp-gold" />
+        <span className="text-fp-gold text-xs font-medium">4.5</span>
+      </span>
+    </div>
+    {restaurant.address && (
+      <div className="flex items-center gap-1 mt-2">
+        <MapPinIcon className="w-3 h-3 text-fp-subtle flex-shrink-0" />
+        <span className="text-fp-subtle text-xs truncate">{restaurant.address}</span>
+      </div>
+    )}
+  </div>
+);
+
+// ── Main dashboard ────────────────────────────────────────────────────────────
+export const ClientDashboard = () => {
+  const user = useAuthStore((s) => s.user);
+
+  const [restaurants, setRestaurants] = useState([]);
+  const [stats, setStats]             = useState({ orders: null, reservations: null, restaurants: null });
+  const [loading, setLoading]         = useState(true);
+  const [resLoading, setResLoading]   = useState(true);
+
+  useEffect(() => {
+    // Load stats
+    Promise.allSettled([
+      getOrders(),
+      getReservations(),
+      getRestaurants({ isActive: true, limit: 1 }),
+    ]).then(([orders, reservations, restaurants]) => {
+      const orderList = Array.isArray(orders.value?.data) ? orders.value.data : [];
+      const resList   = Array.isArray(reservations.value?.data) ? reservations.value.data : [];
+      setStats({
+        orders:       orderList.length,
+        reservations: resList.filter((r) => r.status === 'ACTIVA').length,
+        restaurants:  restaurants.value?.data?.pagination?.totalRecords ?? null,
+      });
+    }).finally(() => setLoading(false));
+
+    // Load restaurant grid
+    getRestaurants({ isActive: true, limit: 9 })
+      .then((r) => setRestaurants(r.data?.data ?? []))
+      .catch(() => setRestaurants([]))
+      .finally(() => setResLoading(false));
+  }, []);
+
+  return (
+    <div className="space-y-6 animate-fadeUp">
+      {/* Greeting */}
       <div>
-        <h4 className="text-fp-text text-sm font-medium group-hover:text-fp-gold transition-colors">{name}</h4>
-        <span className="text-fp-subtle text-xs">{category}</span>
+        <h1 className="font-display text-2xl text-fp-text">
+          Hola, {user?.username ?? 'usuario'} 👋
+        </h1>
+        <p className="text-fp-muted text-sm mt-0.5">Explora restaurantes y gestiona tus pedidos</p>
       </div>
-      <div className="flex items-center gap-1">
-        <StarIcon className="w-3.5 h-3.5 text-fp-gold fill-fp-gold" />
-        <span className="text-fp-gold text-xs font-medium">{rating}</span>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard Icon={BagIcon}      label="Pedidos totales"    value={stats.orders}       loading={loading} to="/dashboard/client/orders" />
+        <StatCard Icon={CalendarIcon} label="Reservas activas"   value={stats.reservations} loading={loading} to="/dashboard/client/reservations" />
+        <StatCard Icon={BuildingIcon} label="Restaurantes"       value={stats.restaurants}  loading={loading} />
       </div>
-    </div>
-    <div className="flex items-center gap-1 mt-2">
-      <MapPinIcon className="w-3 h-3 text-fp-subtle" />
-      <span className="text-fp-subtle text-xs">{location}</span>
-    </div>
-  </div>
-);
 
-export const ClientDashboard = () => (
-  <div className="space-y-6 animate-fadeUp">
-    <div>
-      <h1 className="font-display text-2xl text-fp-text">Explorar Restaurantes</h1>
-      <p className="text-fp-muted text-sm mt-0.5">Descubre los mejores restaurantes de la plataforma</p>
-    </div>
-
-    {/* Stats personales */}
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      {[
-        { Icon: CalendarIcon, label: 'Mis reservaciones', value: '—' },
-        { Icon: BagIcon,      label: 'Mis pedidos',       value: '—' },
-        { Icon: StarIcon,     label: 'Reseñas escritas',  value: '—' },
-      ].map(({ Icon, label, value }) => (
-        <div key={label} className="bg-fp-surface border border-fp-border rounded-xl p-5 hover:border-fp-gold/20 transition-colors">
-          <div className="p-2.5 rounded-lg bg-fp-gold-dim w-fit mb-3">
-            <Icon className="w-4.5 h-4.5 text-fp-gold" />
-          </div>
-          <p className="text-fp-muted text-xs uppercase tracking-wide mb-1">{label}</p>
-          <p className="text-fp-text text-xl font-semibold">{value}</p>
+      {/* Restaurant grid */}
+      <div className="bg-fp-surface border border-fp-border rounded-xl p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-fp-text font-medium text-sm">Restaurantes disponibles</h3>
+          <BuildingIcon className="w-4 h-4 text-fp-subtle" />
         </div>
-      ))}
-    </div>
 
-    {/* Restaurantes destacados */}
-    <div className="bg-fp-surface border border-fp-border rounded-xl p-5">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-fp-text font-medium text-sm">Restaurantes destacados</h3>
-        <BuildingIcon className="w-4 h-4 text-fp-subtle" />
+        {resLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-full" />)}
+          </div>
+        ) : restaurants.length === 0 ? (
+          <p className="text-fp-subtle text-sm text-center py-8">Sin restaurantes disponibles</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {restaurants.map((r) => <RestaurantCard key={r._id} restaurant={r} />)}
+          </div>
+        )}
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <RestaurantCard name="La Maison Dorée"   category="FORMAL"    rating="4.8" location="Zona Viva, Guatemala" />
-        <RestaurantCard name="Bistró del Puerto" category="FORMAL"    rating="4.6" location="Puerto Barrios" />
-        <RestaurantCard name="Café Central"      category="CAFETERIA" rating="4.3" location="Centro Histórico" />
+
+      {/* Quick access */}
+      <div className="grid grid-cols-2 gap-3">
+        {[
+          { Icon: BagIcon,      label: 'Mis pedidos',      path: '/dashboard/client/orders' },
+          { Icon: CalendarIcon, label: 'Mis reservaciones', path: '/dashboard/client/reservations' },
+        ].map(({ Icon, label, path }) => (
+          <Link key={path} to={path}
+            className="flex items-center gap-2.5 p-3 rounded-lg border border-fp-border hover:border-fp-gold/30 hover:bg-fp-gold-dim transition-colors group">
+            <Icon className="w-4 h-4 text-fp-muted group-hover:text-fp-gold transition-colors" />
+            <span className="text-fp-muted group-hover:text-fp-text text-xs transition-colors">{label}</span>
+          </Link>
+        ))}
       </div>
-      <p className="text-fp-subtle text-xs text-center mt-4">
-        Los restaurantes se cargarán desde el servicio cuando esté integrado.
-      </p>
     </div>
-  </div>
-);
+  );
+};

@@ -7,5 +7,7 @@ export const getOrders = ({ page = 1, limit = 50 } = {}) =>
 
 export const getOrderById = (id) => axiosOrders.get(`${BASE}/${id}`);
 
+export const createOrder = (data) => axiosOrders.post(BASE, data);
+
 export const updateOrderStatus = (id, status) =>
   axiosOrders.put(`${BASE}/${id}/status`, { status });
