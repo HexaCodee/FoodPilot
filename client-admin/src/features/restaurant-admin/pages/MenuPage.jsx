@@ -151,7 +151,7 @@ export const MenuPage = () => {
   const fetchMenus = useCallback(() => {
     if (!selectedRestaurant) return;
     setLoading(true);
-    getMenus({ restaurant: selectedRestaurant._id })
+    getMenus({ restaurant: selectedRestaurant._id, isAvailable: 'all' })
       .then((r) => setItems(r.data?.data ?? []))
       .catch(() => setItems([]))
       .finally(() => setLoading(false));

@@ -7,3 +7,4 @@ export * from './tables.js';
 export * from './menus.js';
 export * from './orders.js';
 export * from './reservations.js';
+export * from './events.js';
