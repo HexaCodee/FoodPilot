@@ -2,19 +2,22 @@
 const mongoose = require('mongoose');
 
 // Definir el esquema para Table
-const tableSchema = new mongoose.Schema({
+const tableSchema = new mongoose.Schema(
+  {
     number: {
-        type: String,
-        required: true,
-        unique: true,
-        trim: true
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
     },
     status: {
-        type: String,
-        enum: ['DISPONIBLE', 'RESERVADA', 'OCUPADA'],
-        default: 'DISPONIBLE'
-    }
-}, { timestamps: true });
+      type: String,
+      enum: ['DISPONIBLE', 'RESERVADA', 'OCUPADA'],
+      default: 'DISPONIBLE',
+    },
+  },
+  { timestamps: true }
+);
 
 // Exportar el modelo Table
 module.exports = mongoose.model('Table', tableSchema);

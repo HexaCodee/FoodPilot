@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: FoodPilot2026?
       POSTGRES_DB: foodpilot
     ports:
-      - "5437:5432"
+      - '5437:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped

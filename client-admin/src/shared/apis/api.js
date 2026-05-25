@@ -2,16 +2,16 @@ import axios from 'axios';
 
 // ── Token handlers ────────────────────────────────────────────────────────────
 // Registered from authStore after it's created, avoiding circular imports.
-let _getToken        = () => null;
+let _getToken = () => null;
 let _getRefreshToken = () => null;
-let _onLogout        = () => {};
-let _onTokenRefresh  = () => {};
+let _onLogout = () => {};
+let _onTokenRefresh = () => {};
 
 export const setAuthHandlers = ({ getToken, getRefreshToken, onLogout, onTokenRefresh }) => {
-  _getToken        = getToken;
+  _getToken = getToken;
   _getRefreshToken = getRefreshToken;
-  _onLogout        = onLogout;
-  _onTokenRefresh  = onTokenRefresh;
+  _onLogout = onLogout;
+  _onTokenRefresh = onTokenRefresh;
 };
 
 // ── Axios instances ───────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ axiosEvents.interceptors.request.use(attachToken('events'));
 
 // ── Refresh-token logic ───────────────────────────────────────────────────────
 let _isRefreshing = false;
-let failedQueue   = [];
+let failedQueue = [];
 
 const processQueue = (error, token = null) => {
   failedQueue.forEach(({ resolve, reject }) => (error ? reject(error) : resolve(token)));
@@ -65,7 +65,7 @@ const handleRefreshToken = async (error) => {
   const original = error.config;
   if (!original || original._retry) return Promise.reject(error);
 
-  const status    = error.response?.status;
+  const status = error.response?.status;
   const errorCode = error.response?.data?.error;
   const isRefresh = (original.url ?? '').includes('/auth/refresh');
 
@@ -90,7 +90,7 @@ const handleRefreshToken = async (error) => {
   }
 
   original._retry = true;
-  _isRefreshing   = true;
+  _isRefreshing = true;
 
   const refreshToken = _getRefreshToken();
   if (!refreshToken) {

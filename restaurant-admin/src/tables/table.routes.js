@@ -1,15 +1,15 @@
-import { Router } from "express";
-import { validateCreateTable } from "../../middlewares/table-validator.js";
+import { Router } from 'express';
+import { validateCreateTable } from '../../middlewares/table-validator.js';
 
 const router = Router();
 
 import {
-    createTableController,
-    getTablesController,
-    getTableByIdController,
-    updateTableController,
-    changeTableStatusController
-} from "./table.controller.js";
+  createTableController,
+  getTablesController,
+  getTableByIdController,
+  updateTableController,
+  changeTableStatusController,
+} from './table.controller.js';
 
 /**
  * @swagger

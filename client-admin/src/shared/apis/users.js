@@ -11,11 +11,8 @@ export const getUsers = ({ search, role, page = 1, limit = 20 } = {}) => {
   return axiosAuth.get(BASE, { params });
 };
 
-export const updateUserRole = (id, roleName) =>
-  axiosAuth.put(`${BASE}/${id}/role`, { roleName });
+export const updateUserRole = (id, roleName) => axiosAuth.put(`${BASE}/${id}/role`, { roleName });
 
-export const activateUser = (id) =>
-  axiosAuth.put(`${BASE}/${id}/activate`);
+export const activateUser = (id) => axiosAuth.put(`${BASE}/${id}/activate`);
 
-export const deactivateUser = (id) =>
-  axiosAuth.put(`${BASE}/${id}/deactivate`);
+export const deactivateUser = (id) => axiosAuth.put(`${BASE}/${id}/deactivate`);

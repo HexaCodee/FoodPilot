@@ -1,12 +1,12 @@
-import { Router } from "express";
+import { Router } from 'express';
 import {
-    createRestaurantController,
-    getRestaurantsController,
-    getRestaurantByIdController,
-    updateRestaurantController,
-    changeRestaurantStatusController
-} from "./restaurant.controller.js";
-import { validateCreateRestaurant } from "../../middlewares/restaurant-validator.js";
+  createRestaurantController,
+  getRestaurantsController,
+  getRestaurantByIdController,
+  updateRestaurantController,
+  changeRestaurantStatusController,
+} from './restaurant.controller.js';
+import { validateCreateRestaurant } from '../../middlewares/restaurant-validator.js';
 
 const router = Router();
 

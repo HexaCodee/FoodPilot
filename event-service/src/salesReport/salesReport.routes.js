@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import { getAllSalesReports, getSalesReportById, createSalesReport, updateSalesReport, deleteSalesReport } from './salesReport.controller.js';
+import {
+  getAllSalesReports,
+  getSalesReportById,
+  createSalesReport,
+  updateSalesReport,
+  deleteSalesReport,
+} from './salesReport.controller.js';
 
 const router = Router();
 

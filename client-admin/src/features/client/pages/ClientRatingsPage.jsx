@@ -11,7 +11,7 @@ const Skeleton = ({ className = '' }) => (
 );
 
 const StarRating = ({ value, onChange, readOnly = false }) => (
-  <div className="flex gap-1">
+  <div className='flex gap-1'>
     {[1, 2, 3, 4, 5].map((star) => (
       <button
         key={star}
@@ -29,15 +29,16 @@ const StarRating = ({ value, onChange, readOnly = false }) => (
   </div>
 );
 
-const fmtDate = (d) => d
-  ? new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
-  : '—';
+const fmtDate = (d) =>
+  d
+    ? new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
+    : '—';
 
 // ── Rating form ───────────────────────────────────────────────────────────────
 const RatingForm = ({ restaurantId, userId, existing, onSaved }) => {
-  const [rating, setRating]   = useState(existing?.rating ?? 0);
+  const [rating, setRating] = useState(existing?.rating ?? 0);
   const [comment, setComment] = useState(existing?.comment ?? '');
-  const [saving, setSaving]   = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setRating(existing?.rating ?? 0);
@@ -46,7 +47,10 @@ const RatingForm = ({ restaurantId, userId, existing, onSaved }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (rating === 0) { toast.error('Selecciona una calificación'); return; }
+    if (rating === 0) {
+      toast.error('Selecciona una calificación');
+      return;
+    }
     setSaving(true);
     try {
       await createRating({ restaurantId, userId, rating, comment: comment.trim() || undefined });
@@ -54,38 +58,40 @@ const RatingForm = ({ restaurantId, userId, existing, onSaved }) => {
       onSaved();
     } catch (err) {
       const apiErrors = err?.response?.data?.errors;
-      const msg = Array.isArray(apiErrors) && apiErrors.length > 0
-        ? apiErrors[0].msg
-        : (err?.response?.data?.message ?? 'Error al guardar la calificación');
+      const msg =
+        Array.isArray(apiErrors) && apiErrors.length > 0
+          ? apiErrors[0].msg
+          : (err?.response?.data?.message ?? 'Error al guardar la calificación');
       toast.error(msg);
     } finally {
       setSaving(false);
     }
   };
 
-  const fieldCls = 'w-full bg-fp-bg border border-fp-border rounded-lg px-3 py-2 text-fp-text text-sm placeholder-fp-subtle focus:outline-none focus:border-fp-gold/50 transition-colors resize-none';
+  const fieldCls =
+    'w-full bg-fp-bg border border-fp-border rounded-lg px-3 py-2 text-fp-text text-sm placeholder-fp-subtle focus:outline-none focus:border-fp-gold/50 transition-colors resize-none';
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className='space-y-4'>
       <div>
-        <p className="text-fp-subtle text-xs mb-2">Tu calificación *</p>
+        <p className='text-fp-subtle text-xs mb-2'>Tu calificación *</p>
         <StarRating value={rating} onChange={setRating} />
       </div>
       <div>
-        <p className="text-fp-subtle text-xs mb-1">Comentario (opcional)</p>
+        <p className='text-fp-subtle text-xs mb-1'>Comentario (opcional)</p>
         <textarea
           rows={3}
           value={comment}
           onChange={(e) => setComment(e.target.value)}
-          placeholder="Describe tu experiencia…"
+          placeholder='Describe tu experiencia…'
           maxLength={300}
           className={fieldCls}
         />
       </div>
       <button
-        type="submit"
+        type='submit'
         disabled={saving || rating === 0}
-        className="px-4 py-2 bg-fp-gold text-fp-bg text-sm font-medium rounded-lg hover:bg-fp-gold-hover transition-colors disabled:opacity-50"
+        className='px-4 py-2 bg-fp-gold text-fp-bg text-sm font-medium rounded-lg hover:bg-fp-gold-hover transition-colors disabled:opacity-50'
       >
         {saving ? 'Guardando…' : existing ? 'Actualizar calificación' : 'Enviar calificación'}
       </button>
@@ -97,13 +103,13 @@ const RatingForm = ({ restaurantId, userId, existing, onSaved }) => {
 export const ClientRatingsPage = () => {
   const user = useAuthStore((s) => s.user);
 
-  const [restaurants, setRestaurants]       = useState([]);
-  const [selected, setSelected]             = useState('');
-  const [ratings, setRatings]               = useState([]);
-  const [myRating, setMyRating]             = useState(null);
-  const [loadingRes, setLoadingRes]         = useState(true);
+  const [restaurants, setRestaurants] = useState([]);
+  const [selected, setSelected] = useState('');
+  const [ratings, setRatings] = useState([]);
+  const [myRating, setMyRating] = useState(null);
+  const [loadingRes, setLoadingRes] = useState(true);
   const [loadingRatings, setLoadingRatings] = useState(false);
-  const [deleting, setDeleting]             = useState(null);
+  const [deleting, setDeleting] = useState(null);
 
   // Load (or reload) the restaurant list — called after rating changes to update avg
   const loadRestaurants = useCallback(async (keepSelected) => {
@@ -120,14 +126,16 @@ export const ClientRatingsPage = () => {
     }
   }, []);
 
-  useEffect(() => { loadRestaurants(false); }, [loadRestaurants]);
+  useEffect(() => {
+    loadRestaurants(false);
+  }, [loadRestaurants]);
 
   const loadRatings = useCallback(async () => {
     if (!selected) return;
     setLoadingRatings(true);
     try {
       const r = await getRatings({ restaurant: selected });
-      const all = Array.isArray(r.data?.data) ? r.data.data : (Array.isArray(r.data) ? r.data : []);
+      const all = Array.isArray(r.data?.data) ? r.data.data : Array.isArray(r.data) ? r.data : [];
       setRatings(all);
       setMyRating(all.find((rt) => rt.userId === user?.id) ?? null);
     } catch {
@@ -137,7 +145,9 @@ export const ClientRatingsPage = () => {
     }
   }, [selected, user?.id]);
 
-  useEffect(() => { loadRatings(); }, [loadRatings]);
+  useEffect(() => {
+    loadRatings();
+  }, [loadRatings]);
 
   // Called after a rating is saved — reload both so the card avg updates
   const handleRatingSaved = useCallback(() => {
@@ -163,37 +173,39 @@ export const ClientRatingsPage = () => {
   const othersRatings = ratings.filter((rt) => rt.userId !== user?.id);
 
   return (
-    <div className="space-y-6 animate-fadeUp">
+    <div className='space-y-6 animate-fadeUp'>
       {/* Header */}
       <div>
-        <h1 className="font-display text-2xl text-fp-text">Calificaciones</h1>
-        <p className="text-fp-muted text-sm mt-0.5">Califica tu experiencia en los restaurantes</p>
+        <h1 className='font-display text-2xl text-fp-text'>Calificaciones</h1>
+        <p className='text-fp-muted text-sm mt-0.5'>Califica tu experiencia en los restaurantes</p>
       </div>
 
       {/* Restaurant picker */}
-      <div className="bg-fp-surface border border-fp-border rounded-xl p-5">
-        <label className="block text-fp-subtle text-xs mb-2">Seleccionar restaurante</label>
+      <div className='bg-fp-surface border border-fp-border rounded-xl p-5'>
+        <label className='block text-fp-subtle text-xs mb-2'>Seleccionar restaurante</label>
         {loadingRes ? (
-          <Skeleton className="h-10 w-full" />
+          <Skeleton className='h-10 w-full' />
         ) : (
           <select
             value={selected}
             onChange={(e) => setSelected(e.target.value)}
-            className="w-full bg-fp-bg border border-fp-border rounded-lg px-3 py-2 text-fp-text text-sm focus:outline-none focus:border-fp-gold/50 transition-colors"
+            className='w-full bg-fp-bg border border-fp-border rounded-lg px-3 py-2 text-fp-text text-sm focus:outline-none focus:border-fp-gold/50 transition-colors'
           >
             {restaurants.map((r) => (
-              <option key={r._id} value={r._id}>{r.name}</option>
+              <option key={r._id} value={r._id}>
+                {r.name}
+              </option>
             ))}
           </select>
         )}
 
         {selectedRes && (
-          <div className="mt-3 flex items-center gap-2">
-            <BuildingIcon className="w-4 h-4 text-fp-subtle flex-shrink-0" />
-            <span className="text-fp-subtle text-xs">{selectedRes.category}</span>
+          <div className='mt-3 flex items-center gap-2'>
+            <BuildingIcon className='w-4 h-4 text-fp-subtle flex-shrink-0' />
+            <span className='text-fp-subtle text-xs'>{selectedRes.category}</span>
             {selectedRes.rating != null && (
-              <span className="ml-auto flex items-center gap-1 text-fp-gold text-xs font-medium">
-                <StarIcon className="w-3.5 h-3.5" />
+              <span className='ml-auto flex items-center gap-1 text-fp-gold text-xs font-medium'>
+                <StarIcon className='w-3.5 h-3.5' />
                 {Number(selectedRes.rating).toFixed(1)} · {selectedRes.reviewCount ?? 0} reseñas
               </span>
             )}
@@ -202,8 +214,8 @@ export const ClientRatingsPage = () => {
       </div>
 
       {/* My rating */}
-      <div className="bg-fp-surface border border-fp-border rounded-xl p-5">
-        <h3 className="text-fp-text font-medium text-sm mb-4">
+      <div className='bg-fp-surface border border-fp-border rounded-xl p-5'>
+        <h3 className='text-fp-text font-medium text-sm mb-4'>
           {myRating ? 'Tu calificación' : 'Deja tu calificación'}
         </h3>
         {selected ? (
@@ -214,13 +226,13 @@ export const ClientRatingsPage = () => {
             onSaved={handleRatingSaved}
           />
         ) : (
-          <p className="text-fp-subtle text-sm">Selecciona un restaurante para calificar.</p>
+          <p className='text-fp-subtle text-sm'>Selecciona un restaurante para calificar.</p>
         )}
         {myRating && (
           <button
             onClick={() => handleDelete(myRating._id)}
             disabled={deleting === myRating._id}
-            className="mt-3 text-xs text-fp-subtle hover:text-red-400 transition-colors"
+            className='mt-3 text-xs text-fp-subtle hover:text-red-400 transition-colors'
           >
             {deleting === myRating._id ? 'Eliminando…' : 'Eliminar mi calificación'}
           </button>
@@ -228,32 +240,38 @@ export const ClientRatingsPage = () => {
       </div>
 
       {/* Other ratings */}
-      <div className="bg-fp-surface border border-fp-border rounded-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-fp-border">
-          <h3 className="text-fp-text font-medium text-sm">
+      <div className='bg-fp-surface border border-fp-border rounded-xl overflow-hidden'>
+        <div className='px-5 py-4 border-b border-fp-border'>
+          <h3 className='text-fp-text font-medium text-sm'>
             Reseñas de otros usuarios
-            {!loadingRatings && <span className="text-fp-subtle font-normal ml-2">({othersRatings.length})</span>}
+            {!loadingRatings && (
+              <span className='text-fp-subtle font-normal ml-2'>({othersRatings.length})</span>
+            )}
           </h3>
         </div>
 
         {loadingRatings ? (
-          <div className="p-5 space-y-3">
-            {[1, 2].map((i) => <Skeleton key={i} className="h-16 w-full" />)}
+          <div className='p-5 space-y-3'>
+            {[1, 2].map((i) => (
+              <Skeleton key={i} className='h-16 w-full' />
+            ))}
           </div>
         ) : othersRatings.length === 0 ? (
-          <p className="text-fp-subtle text-sm text-center py-10">Sin reseñas de otros usuarios aún</p>
+          <p className='text-fp-subtle text-sm text-center py-10'>
+            Sin reseñas de otros usuarios aún
+          </p>
         ) : (
-          <div className="divide-y divide-fp-border-subtle">
+          <div className='divide-y divide-fp-border-subtle'>
             {othersRatings.map((rt) => (
-              <div key={rt._id} className="px-5 py-4">
-                <div className="flex items-center justify-between mb-1">
+              <div key={rt._id} className='px-5 py-4'>
+                <div className='flex items-center justify-between mb-1'>
                   <StarRating value={rt.rating} readOnly />
-                  <span className="text-fp-subtle text-xs">{fmtDate(rt.createdAt)}</span>
+                  <span className='text-fp-subtle text-xs'>{fmtDate(rt.createdAt)}</span>
                 </div>
-                {rt.comment && (
-                  <p className="text-fp-muted text-sm mt-1">{rt.comment}</p>
-                )}
-                <p className="text-fp-subtle text-xs mt-1 font-mono">…{rt.userId?.slice(-6) ?? '—'}</p>
+                {rt.comment && <p className='text-fp-muted text-sm mt-1'>{rt.comment}</p>}
+                <p className='text-fp-subtle text-xs mt-1 font-mono'>
+                  …{rt.userId?.slice(-6) ?? '—'}
+                </p>
               </div>
             ))}
           </div>

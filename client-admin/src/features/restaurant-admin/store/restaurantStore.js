@@ -6,11 +6,9 @@ export const useRestaurantStore = create(
     (set) => ({
       selectedRestaurant: null,
 
-      setSelectedRestaurant: (restaurant) =>
-        set({ selectedRestaurant: restaurant }),
+      setSelectedRestaurant: (restaurant) => set({ selectedRestaurant: restaurant }),
 
-      clearRestaurant: () =>
-        set({ selectedRestaurant: null }),
+      clearRestaurant: () => set({ selectedRestaurant: null }),
     }),
     { name: 'foodpilot-restaurant' }
   )

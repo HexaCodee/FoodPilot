@@ -11,32 +11,32 @@ const options = {
       description: 'API para gestionar pedidos y reservas en el sistema de seguimiento de pedidos',
       contact: {
         name: 'FoodPilot',
-        email: 'support@foodpilot.local'
-      }
+        email: 'support@foodpilot.local',
+      },
     },
     servers: [
       {
         url: 'http://localhost:3000',
-        description: 'Servidor de desarrollo'
-      }
+        description: 'Servidor de desarrollo',
+      },
     ],
     tags: [
       {
         name: 'Orders',
-        description: 'Operaciones relacionadas con pedidos'
+        description: 'Operaciones relacionadas con pedidos',
       },
       {
         name: 'Reservations',
-        description: 'Operaciones relacionadas con reservas'
-      }
-    ]
+        description: 'Operaciones relacionadas con reservas',
+      },
+    ],
   },
-  apis: [path.join(__dirname, '../src/routes/*.js')]
+  apis: [path.join(__dirname, '../src/routes/*.js')],
 };
 
 const specs = swaggerJSDoc(options);
 
 module.exports = {
   specs,
-  swaggerUI
+  swaggerUI,
 };

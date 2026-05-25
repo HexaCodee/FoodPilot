@@ -9,5 +9,5 @@ export const createTable = (data) => axiosAdmin.post(BASE, data);
 
 export const updateTable = (id, data) => axiosAdmin.put(`${BASE}/${id}`, data);
 
-export const activateTable  = (id) => axiosAdmin.patch(`${BASE}/${id}/activate`);
+export const activateTable = (id) => axiosAdmin.patch(`${BASE}/${id}/activate`);
 export const deactivateTable = (id) => axiosAdmin.patch(`${BASE}/${id}/deactivate`);

@@ -5,7 +5,11 @@ const router = express.Router();
 // Importar controlador de reservas
 const controller = require('../controllers/reservation.controller');
 // Importar validadores de reservas
-const { createReservationValidator, cancelReservationValidator, completeReservationValidator } = require('../validators/reservation.validator');
+const {
+  createReservationValidator,
+  cancelReservationValidator,
+  completeReservationValidator,
+} = require('../validators/reservation.validator');
 // Importar middleware de validación
 const validate = require('../../middlewares/validation.middleware');
 

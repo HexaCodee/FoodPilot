@@ -13,8 +13,8 @@ router.post('/', upload.single('file'), (req, res) => {
     return res.status(400).json({ success: false, message: 'No se recibió ningún archivo' });
   }
   const protocol = req.protocol;
-  const host     = req.get('host');
-  const url      = `${protocol}://${host}/uploads/${req.file.filename}`;
+  const host = req.get('host');
+  const url = `${protocol}://${host}/uploads/${req.file.filename}`;
   return res.status(201).json({ success: true, url });
 });
 
@@ -23,7 +23,9 @@ router.use((err, _req, res, _next) => {
   if (err?.code === 'LIMIT_FILE_SIZE') {
     return res.status(413).json({ success: false, message: 'La imagen no puede superar los 5 MB' });
   }
-  return res.status(400).json({ success: false, message: err?.message ?? 'Error al subir archivo' });
+  return res
+    .status(400)
+    .json({ success: false, message: err?.message ?? 'Error al subir archivo' });
 });
 
 export default router;

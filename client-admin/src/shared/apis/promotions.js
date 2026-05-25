@@ -5,7 +5,7 @@ const BASE = '/promotions';
 export const getPromotions = ({ restaurantId, isActive } = {}) => {
   const params = {};
   if (restaurantId !== undefined) params.restaurant = restaurantId; // backend expects ?restaurant=
-  if (isActive     !== undefined) params.isActive   = isActive;
+  if (isActive !== undefined) params.isActive = isActive;
   return axiosAdmin.get(BASE, { params });
 };
 
