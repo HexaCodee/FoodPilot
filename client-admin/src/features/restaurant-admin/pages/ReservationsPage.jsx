@@ -74,8 +74,8 @@ export const ReservationsPage = () => {
 
       {/* Table */}
       <div className="bg-fp-surface border border-fp-border rounded-xl overflow-hidden">
-        <div className="grid grid-cols-[80px_1fr_120px_160px] gap-4 px-5 py-3 border-b border-fp-border bg-fp-elevated">
-          {['Mesa', 'Fecha reservada', 'Estado', 'Acciones'].map((h) => (
+        <div className="grid grid-cols-[80px_1fr_1fr_120px_160px] gap-4 px-5 py-3 border-b border-fp-border bg-fp-elevated">
+          {['Mesa', 'Fecha reservada', 'Cliente (ID)', 'Estado', 'Acciones'].map((h) => (
             <span key={h} className="text-fp-muted text-xs font-medium uppercase tracking-wide">{h}</span>
           ))}
         </div>
@@ -93,9 +93,12 @@ export const ReservationsPage = () => {
           <div className="divide-y divide-fp-border-subtle">
             {filtered.map((res) => (
               <div key={res._id}
-                className="grid grid-cols-[80px_1fr_120px_160px] gap-4 px-5 py-4 items-center hover:bg-fp-elevated/50 transition-colors">
+                className="grid grid-cols-[80px_1fr_1fr_120px_160px] gap-4 px-5 py-4 items-center hover:bg-fp-elevated/50 transition-colors">
                 <p className="text-fp-text text-sm font-medium">Mesa {res.tableNumber}</p>
                 <p className="text-fp-muted text-sm">{formatDate(res.reservedAt)}</p>
+                <p className="text-fp-subtle text-xs font-mono truncate" title={res.userId ?? ''}>
+                  {res.userId ? `…${res.userId.slice(-8)}` : '—'}
+                </p>
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full w-fit ${STATUS_COLOR[res.status] ?? STATUS_COLOR.ACTIVA}`}>
                   {STATUS_LABEL[res.status] ?? res.status}
                 </span>

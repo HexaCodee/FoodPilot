@@ -29,10 +29,12 @@ exports.createReservation = async (req, res, next) => {
     }
 };
 
-// Obtener todas las reservas
+// Obtener todas las reservas (filtrar por userId si se proporciona)
 exports.getReservations = async (req, res, next) => {
     try {
-        const reservations = await Reservation.find();
+        const filter = {};
+        if (req.query.userId) filter.userId = req.query.userId;
+        const reservations = await Reservation.find(filter).sort({ createdAt: -1 });
         res.json(reservations);
     } catch (error) {
         next(error);
@@ -101,6 +103,28 @@ exports.cancelReservation = async (req, res, next) => {
         await markTable(reservation.tableNumber, 'DISPONIBLE');
         res.json(reservation);
     } catch (error) {
+        next(error);
+    }
+};
+
+// Actualizar datos de una reserva activa
+exports.updateReservation = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const reservation = await Reservation.findById(id);
+        if (!reservation) return res.status(404).json({ message: 'Reserva no encontrada' });
+        if (reservation.status !== 'ACTIVA') {
+            return res.status(400).json({ message: 'Solo se pueden modificar reservas activas' });
+        }
+        const { tableNumber, reservedAt } = req.body;
+        if (tableNumber) reservation.tableNumber = tableNumber;
+        if (reservedAt) reservation.reservedAt = new Date(reservedAt);
+        await reservation.save();
+        res.json(reservation);
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({ message: 'La mesa ya está reservada en ese horario' });
+        }
         next(error);
     }
 };

@@ -12,6 +12,6 @@ exports.createOrderValidator = [
 exports.updateStatusValidator = [
     param('id').isMongoId().withMessage('ID inválido'),
     body('status')
-        .isIn(['PENDIENTE', 'ENVIADO', 'ENTREGADO'])
+        .isIn(['PENDIENTE', 'ENVIADO', 'ENTREGADO', 'CANCELADO'])
         .withMessage('Estado inválido')
 ];

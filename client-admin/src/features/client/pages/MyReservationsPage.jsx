@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
-import { getReservations, createReservation, cancelReservation } from '../../../shared/apis/reservations.js';
+import { useAuthStore } from '../../auth/store/authStore.js';
+import { getReservations, createReservation, cancelReservation, updateReservation } from '../../../shared/apis/reservations.js';
 import { Modal, ModalActions, BtnPrimary, BtnSecondary } from '../../../shared/components/ui/Modal.jsx';
 import { CalendarIcon } from '../../../shared/components/ui/Icons.jsx';
 
@@ -26,7 +27,7 @@ const STATUS_STYLE = {
 const TABS = ['Todas', 'ACTIVA', 'CANCELADA', 'COMPLETADA'];
 
 // ── Create reservation modal ──────────────────────────────────────────────────
-const CreateReservationModal = ({ isOpen, onClose, onCreated }) => {
+const CreateReservationModal = ({ isOpen, onClose, onCreated, userId }) => {
   const [form, setForm]     = useState({ tableNumber: '', reservedAt: '' });
   const [saving, setSaving] = useState(false);
 
@@ -43,6 +44,7 @@ const CreateReservationModal = ({ isOpen, onClose, onCreated }) => {
       await createReservation({
         tableNumber: form.tableNumber.trim(),
         reservedAt:  new Date(form.reservedAt).toISOString(),
+        userId:      userId,
       });
       toast.success('Reserva creada');
       onCreated();
@@ -84,25 +86,93 @@ const CreateReservationModal = ({ isOpen, onClose, onCreated }) => {
   );
 };
 
+// ── Edit reservation modal ────────────────────────────────────────────────────
+const EditReservationModal = ({ reservation, onClose, onUpdated }) => {
+  const toLocal = (iso) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const [form, setForm]     = useState({ tableNumber: reservation?.tableNumber ?? '', reservedAt: toLocal(reservation?.reservedAt) });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (reservation) setForm({ tableNumber: reservation.tableNumber ?? '', reservedAt: toLocal(reservation.reservedAt) });
+  }, [reservation]);
+
+  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await updateReservation(reservation._id, {
+        tableNumber: form.tableNumber.trim(),
+        reservedAt:  new Date(form.reservedAt).toISOString(),
+      });
+      toast.success('Reserva actualizada');
+      onUpdated();
+      onClose();
+    } catch (err) {
+      const apiErrors = err?.response?.data?.errors;
+      const msg = Array.isArray(apiErrors) && apiErrors.length > 0
+        ? apiErrors[0].msg
+        : (err?.response?.data?.message ?? 'Error al actualizar la reserva');
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fieldCls = 'w-full bg-fp-bg border border-fp-border rounded-lg px-3 py-2 text-fp-text text-sm placeholder-fp-subtle focus:outline-none focus:border-fp-gold/50 transition-colors';
+  const labelCls = 'block text-fp-subtle text-xs mb-1';
+
+  return (
+    <Modal isOpen={!!reservation} onClose={onClose} title="Editar reserva">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className={labelCls}>Número de mesa *</label>
+          <input className={fieldCls} value={form.tableNumber}
+            onChange={(e) => set('tableNumber', e.target.value)} required />
+        </div>
+        <div>
+          <label className={labelCls}>Fecha y hora *</label>
+          <input type="datetime-local" className={fieldCls} value={form.reservedAt}
+            onChange={(e) => set('reservedAt', e.target.value)} required />
+        </div>
+        <ModalActions>
+          <BtnSecondary onClick={onClose} disabled={saving}>Cancelar</BtnSecondary>
+          <BtnPrimary type="submit" loading={saving}>Guardar cambios</BtnPrimary>
+        </ModalActions>
+      </form>
+    </Modal>
+  );
+};
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 export const MyReservationsPage = () => {
+  const user = useAuthStore((s) => s.user);
+
   const [reservations, setReservations] = useState([]);
   const [loading, setLoading]           = useState(true);
   const [tab, setTab]                   = useState('ACTIVA');
   const [modalOpen, setModalOpen]       = useState(false);
   const [cancelling, setCancelling]     = useState(null);
+  const [editing, setEditing]           = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const r = await getReservations();
+      const r = await getReservations({ userId: user?.id });
       setReservations(Array.isArray(r.data) ? r.data : []);
     } catch {
       toast.error('Error al cargar reservas');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.id]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -189,13 +259,21 @@ export const MyReservationsPage = () => {
                     {res.status.charAt(0) + res.status.slice(1).toLowerCase()}
                   </span>
                   {res.status === 'ACTIVA' && (
-                    <button
-                      onClick={() => handleCancel(res)}
-                      disabled={cancelling === res._id}
-                      className="text-xs text-fp-subtle hover:text-red-400 border border-fp-border hover:border-red-500/40 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
-                    >
-                      {cancelling === res._id ? '…' : 'Cancelar'}
-                    </button>
+                    <>
+                      <button
+                        onClick={() => setEditing(res)}
+                        className="text-xs text-fp-subtle hover:text-fp-gold border border-fp-border hover:border-fp-gold/30 px-3 py-1.5 rounded-lg transition-colors"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleCancel(res)}
+                        disabled={cancelling === res._id}
+                        className="text-xs text-fp-subtle hover:text-red-400 border border-fp-border hover:border-red-500/40 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                      >
+                        {cancelling === res._id ? '…' : 'Cancelar'}
+                      </button>
+                    </>
                   )}
                 </div>
               </div>
@@ -208,6 +286,13 @@ export const MyReservationsPage = () => {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={load}
+        userId={user?.id}
+      />
+
+      <EditReservationModal
+        reservation={editing}
+        onClose={() => setEditing(null)}
+        onUpdated={load}
       />
     </div>
   );

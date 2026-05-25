@@ -151,5 +151,7 @@ router.get('/:id', controller.getOrderById);
  */
 router.put('/:id/status', updateStatusValidator, validate, controller.updateStatus);
 
+router.put('/:id/cancel', controller.cancelOrder);
+
 // Exportar el router
 module.exports = router;
