@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using AuthService.Application.DTOs;
 using AuthService.Application.Interfaces;
@@ -22,6 +23,11 @@ public class UserManagementController(IUserManagementService userManagement) : C
     private string? GetUserRole() =>
         User.FindFirst("role")?.Value
         ?? User.FindFirst(ClaimTypes.Role)?.Value;
+
+    // Busca el ID del usuario autenticado desde el claim "sub"
+    private string? GetUserId() =>
+        User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+        ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
     private IActionResult ForbiddenResponse() =>
         StatusCode(403, new { success = false, message = "Acceso denegado. Se requiere rol PLATFORM_ADMIN." });
@@ -86,5 +92,35 @@ public class UserManagementController(IUserManagementService userManagement) : C
         if (GetUserRole() != RoleConstants.PLATFORM_ADMIN) return ForbiddenResponse();
         var result = await userManagement.UpdateUserStatusAsync(id, false);
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Actualiza el perfil del usuario autenticado (username).
+    /// </summary>
+    [HttpPut("me")]
+    [SwaggerOperation(Summary = "Actualizar mi perfil", Description = "Permite al usuario autenticado cambiar su nombre de usuario")]
+    public async Task<IActionResult> UpdateMyProfile([FromBody] UpdateProfileDto dto)
+    {
+        var userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized(new { success = false, message = "Token inválido" });
+
+        var result = await userManagement.UpdateProfileAsync(userId, dto.Username, dto.ProfilePictureUrl);
+        return Ok(new { success = true, message = "Perfil actualizado", userDetails = result });
+    }
+
+    /// <summary>
+    /// Elimina la cuenta del usuario autenticado.
+    /// </summary>
+    [HttpDelete("me")]
+    [SwaggerOperation(Summary = "Eliminar mi cuenta", Description = "Elimina permanentemente la cuenta del usuario autenticado")]
+    public async Task<IActionResult> DeleteMyAccount()
+    {
+        var userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized(new { success = false, message = "Token inválido" });
+
+        await userManagement.DeleteOwnAccountAsync(userId);
+        return Ok(new { success = true, message = "Cuenta eliminada exitosamente" });
     }
 }

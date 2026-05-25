@@ -37,6 +37,9 @@ export const forgotPassword = async (email) => {
   }
 };
 
+export const updateProfile  = (data) => axiosAuth.put('/users/me', data);
+export const deleteAccount  = ()     => axiosAuth.delete('/users/me');
+
 export const resetPassword = async (token, newPassword) => {
   try {
     return await axiosAuth.post('/auth/reset-password', { token, newPassword });

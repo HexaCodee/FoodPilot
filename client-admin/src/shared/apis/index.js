@@ -8,3 +8,7 @@ export * from './menus.js';
 export * from './orders.js';
 export * from './reservations.js';
 export * from './events.js';
+export * from './inventory.js';
+export * from './ratings.js';
+export * from './promotions.js';
+export * from './upload.js';

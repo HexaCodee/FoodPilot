@@ -184,11 +184,19 @@ export const UsersPage = () => {
                     <tr key={u.id} className="hover:bg-fp-bg/40 transition-colors group">
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-fp-gold-dim border border-fp-gold/20 flex items-center justify-center flex-shrink-0">
-                            <span className="text-fp-gold text-xs font-semibold">
-                              {u.name?.[0]?.toUpperCase()}{u.surname?.[0]?.toUpperCase()}
-                            </span>
-                          </div>
+                          {u.profilePicture ? (
+                            <img
+                              src={u.profilePicture}
+                              alt={u.username}
+                              className="w-8 h-8 rounded-full object-cover border border-fp-gold/20 flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-fp-gold-dim border border-fp-gold/20 flex items-center justify-center flex-shrink-0">
+                              <span className="text-fp-gold text-xs font-semibold">
+                                {u.name?.[0]?.toUpperCase()}{u.surname?.[0]?.toUpperCase()}
+                              </span>
+                            </div>
+                          )}
                           <div>
                             <p className="text-fp-text font-medium">{u.name} {u.surname}</p>
                             <p className="text-fp-subtle text-xs">@{u.username}</p>
@@ -263,11 +271,19 @@ export const UsersPage = () => {
         {roleModal.user && (
           <>
             <div className="flex items-center gap-3 mb-5 p-3 rounded-lg bg-fp-bg border border-fp-border">
-              <div className="w-9 h-9 rounded-full bg-fp-gold-dim border border-fp-gold/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-fp-gold text-sm font-semibold">
-                  {roleModal.user.name?.[0]?.toUpperCase()}{roleModal.user.surname?.[0]?.toUpperCase()}
-                </span>
-              </div>
+              {roleModal.user.profilePicture ? (
+                <img
+                  src={roleModal.user.profilePicture}
+                  alt={roleModal.user.username}
+                  className="w-9 h-9 rounded-full object-cover border border-fp-gold/20 flex-shrink-0"
+                />
+              ) : (
+                <div className="w-9 h-9 rounded-full bg-fp-gold-dim border border-fp-gold/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-fp-gold text-sm font-semibold">
+                    {roleModal.user.name?.[0]?.toUpperCase()}{roleModal.user.surname?.[0]?.toUpperCase()}
+                  </span>
+                </div>
+              )}
               <div>
                 <p className="text-fp-text font-medium text-sm">{roleModal.user.name} {roleModal.user.surname}</p>
                 <p className="text-fp-subtle text-xs">{roleModal.user.email}</p>

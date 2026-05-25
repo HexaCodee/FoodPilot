@@ -19,4 +19,7 @@ public interface IUserRepository
     Task UpdateUserRoleAsync(string userId, string roleId);
     Task<(IReadOnlyList<User> Users, int Total)> GetAllAsync(string? search, string? role, int page, int limit);
     Task<User> UpdateStatusAsync(string userId, bool status);
+    Task<string> GetProfilePictureAsync(string userId);
+    Task<IReadOnlyDictionary<string, string>> GetProfilePicturesBatchAsync(IEnumerable<string> userIds);
+    Task UpdateProfilePictureAsync(string userId, string pictureUrl);
 }

@@ -1,6 +1,7 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRestaurantStore } from '../store/restaurantStore.js';
 import { getMenus, createMenu, updateMenu, activateMenu, deactivateMenu } from '../../../shared/apis/menus.js';
+import { uploadImage } from '../../../shared/apis/upload.js';
 import { Modal, ModalActions, BtnPrimary, BtnSecondary } from '../../../shared/components/ui/Modal.jsx';
 import { UtensilsIcon } from '../../../shared/components/ui/Icons.jsx';
 
@@ -43,13 +44,17 @@ const Checkbox = ({ label, checked, onChange }) => (
   </label>
 );
 
-const EMPTY = { name: '', description: '', price: '', category: 'PLATO_FUERTE', ingredients: '', preparationTime: '', isVegetarian: false, isVegan: false, isGlutenFree: false };
+const EMPTY = { name: '', description: '', price: '', category: 'PLATO_FUERTE', ingredients: '', preparationTime: '', isVegetarian: false, isVegan: false, isGlutenFree: false, image: '' };
 
 // ── Form modal ────────────────────────────────────────────────────────────────
 const MenuFormModal = ({ isOpen, onClose, onSaved, restaurantId, editing }) => {
-  const [form, setForm]     = useState(EMPTY);
-  const [saving, setSaving] = useState(false);
-  const [error, setError]   = useState('');
+  const [form, setForm]         = useState(EMPTY);
+  const [saving, setSaving]     = useState(false);
+  const [error, setError]       = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -61,16 +66,35 @@ const MenuFormModal = ({ isOpen, onClose, onSaved, restaurantId, editing }) => {
       isVegetarian: editing.isVegetarian ?? false,
       isVegan: editing.isVegan ?? false,
       isGlutenFree: editing.isGlutenFree ?? false,
+      image: editing.image ?? '',
     } : EMPTY);
+    setImageFile(null);
+    setImagePreview(editing?.image ?? '');
     setError('');
   }, [isOpen, editing]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
   const handleSubmit = async () => {
     if (!form.name || !form.price || !form.category) { setError('Nombre, precio y categoría son requeridos.'); return; }
     setSaving(true); setError('');
     try {
+      let imageUrl = form.image;
+
+      // Upload new image if one was selected
+      if (imageFile) {
+        setUploading(true);
+        imageUrl = await uploadImage(imageFile);
+        setUploading(false);
+      }
+
       const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
@@ -82,17 +106,63 @@ const MenuFormModal = ({ isOpen, onClose, onSaved, restaurantId, editing }) => {
         isVegetarian: form.isVegetarian,
         isVegan: form.isVegan,
         isGlutenFree: form.isGlutenFree,
+        image: imageUrl || undefined,
       };
       editing ? await updateMenu(editing._id, payload) : await createMenu(payload);
       onSaved(); onClose();
     } catch (err) {
-      setError(err.response?.data?.message ?? 'Error al guardar el ítem');
+      setUploading(false);
+      setError(err.response?.data?.message ?? err.message ?? 'Error al guardar el ítem');
     } finally { setSaving(false); }
   };
+
+  const displayPreview = imagePreview || form.image;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={editing ? 'Editar ítem' : 'Nuevo ítem del menú'} maxWidth="max-w-xl">
       <div className="space-y-4">
+        {/* Image picker */}
+        <Field label="Imagen del plato (opcional)">
+          <div className="flex items-center gap-3">
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="w-20 h-20 rounded-lg border-2 border-dashed border-fp-border bg-fp-bg flex items-center justify-center cursor-pointer hover:border-fp-gold/50 transition-colors overflow-hidden flex-shrink-0"
+            >
+              {displayPreview ? (
+                <img src={displayPreview} alt="preview" className="w-full h-full object-cover" />
+              ) : (
+                <UtensilsIcon className="w-6 h-6 text-fp-border" />
+              )}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="px-3 py-1.5 text-xs bg-fp-elevated border border-fp-border rounded-lg text-fp-muted hover:text-fp-text hover:border-fp-gold/30 transition-colors"
+              >
+                {displayPreview ? 'Cambiar imagen' : 'Subir imagen'}
+              </button>
+              {displayPreview && (
+                <button
+                  type="button"
+                  onClick={() => { setImageFile(null); setImagePreview(''); set('image', ''); }}
+                  className="text-xs text-red-400 hover:text-red-500 transition-colors text-left"
+                >
+                  Quitar imagen
+                </button>
+              )}
+              <p className="text-fp-subtle text-xs">JPG, PNG, WebP — máx. 5 MB</p>
+            </div>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/jpeg,image/jpg,image/png,image/webp"
+            className="hidden"
+            onChange={handleFileChange}
+          />
+        </Field>
+
         <div className="grid grid-cols-2 gap-4">
           <Field label="Nombre">
             <Input placeholder="Filete a la plancha" value={form.name} onChange={(e) => set('name', e.target.value)} />
@@ -128,6 +198,7 @@ const MenuFormModal = ({ isOpen, onClose, onSaved, restaurantId, editing }) => {
           <Checkbox label="Vegano"      checked={form.isVegan}      onChange={(v) => set('isVegan', v)} />
           <Checkbox label="Sin gluten"  checked={form.isGlutenFree} onChange={(v) => set('isGlutenFree', v)} />
         </div>
+        {uploading && <p className="text-fp-gold text-xs">Subiendo imagen…</p>}
         {error && <p className="text-red-400 text-xs">{error}</p>}
       </div>
       <ModalActions>
@@ -217,30 +288,36 @@ export const MenuPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((item) => (
             <div key={item._id}
-              className={`bg-fp-surface border rounded-xl p-5 flex flex-col gap-3 transition-colors ${
+              className={`bg-fp-surface border rounded-xl overflow-hidden flex flex-col gap-3 transition-colors ${
                 item.isAvailable ? 'border-fp-border hover:border-fp-gold/20' : 'border-fp-border opacity-60'
               }`}>
-              <div className="flex items-start justify-between gap-2">
+              {/* Item image */}
+              {item.image && (
+                <div className="h-36 w-full overflow-hidden bg-fp-elevated">
+                  <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                </div>
+              )}
+              <div className="px-5 pt-1 flex items-start justify-between gap-2">
                 <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${CAT_COLOR[item.category] ?? 'text-fp-muted bg-fp-elevated'}`}>
                   {CAT_LABEL[item.category] ?? item.category}
                 </span>
                 <span className="text-fp-gold font-semibold text-sm">${Number(item.price).toFixed(2)}</span>
               </div>
 
-              <div className="flex-1">
+              <div className="flex-1 px-5">
                 <p className="text-fp-text font-medium text-sm">{item.name}</p>
                 {item.description && <p className="text-fp-subtle text-xs mt-1 line-clamp-2">{item.description}</p>}
               </div>
 
               {/* Dietary tags */}
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap gap-1 px-5">
                 {item.isVegetarian && <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-400/10 text-emerald-400">Vegetariano</span>}
                 {item.isVegan      && <span className="text-xs px-2 py-0.5 rounded-full bg-green-400/10 text-green-400">Vegano</span>}
                 {item.isGlutenFree && <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-400/10 text-yellow-400">Sin gluten</span>}
                 {item.preparationTime && <span className="text-xs px-2 py-0.5 rounded-full bg-fp-elevated text-fp-muted">{item.preparationTime} min</span>}
               </div>
 
-              <div className="flex gap-2 pt-2 border-t border-fp-border-subtle">
+              <div className="flex gap-2 pt-2 border-t border-fp-border-subtle px-5 pb-5">
                 <button onClick={() => { setEditing(item); setModalOpen(true); }}
                   className="flex-1 text-xs py-1.5 rounded-lg border border-fp-border text-fp-muted hover:text-fp-text hover:border-fp-gold/30 transition-colors">
                   Editar

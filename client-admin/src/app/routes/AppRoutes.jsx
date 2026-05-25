@@ -13,20 +13,27 @@ import { UsersPage }            from '../../features/platform-admin/pages/UsersP
 import { AdminRestaurantsPage } from '../../features/platform-admin/pages/AdminRestaurantsPage.jsx';
 import { AdminEventsPage }      from '../../features/platform-admin/pages/AdminEventsPage.jsx';
 import { AdminReportsPage }     from '../../features/platform-admin/pages/AdminReportsPage.jsx';
+import { AdminPromotionsPage }  from '../../features/platform-admin/pages/AdminPromotionsPage.jsx';
 
 // Restaurant Admin pages
-import { RestaurantDashboard }    from '../../features/restaurant-admin/pages/RestaurantDashboard.jsx';
-import { TablesPage }             from '../../features/restaurant-admin/pages/TablesPage.jsx';
-import { MenuPage }               from '../../features/restaurant-admin/pages/MenuPage.jsx';
-import { OrdersPage }             from '../../features/restaurant-admin/pages/OrdersPage.jsx';
-import { ReservationsPage }       from '../../features/restaurant-admin/pages/ReservationsPage.jsx';
-import { RestaurantReportsPage }  from '../../features/restaurant-admin/pages/RestaurantReportsPage.jsx';
+import { RestaurantDashboard }        from '../../features/restaurant-admin/pages/RestaurantDashboard.jsx';
+import { TablesPage }                 from '../../features/restaurant-admin/pages/TablesPage.jsx';
+import { MenuPage }                   from '../../features/restaurant-admin/pages/MenuPage.jsx';
+import { InventoryPage }              from '../../features/restaurant-admin/pages/InventoryPage.jsx';
+import { OrdersPage }                 from '../../features/restaurant-admin/pages/OrdersPage.jsx';
+import { ReservationsPage }           from '../../features/restaurant-admin/pages/ReservationsPage.jsx';
+import { RestaurantReportsPage }      from '../../features/restaurant-admin/pages/RestaurantReportsPage.jsx';
+import { RestaurantPromotionsPage }   from '../../features/restaurant-admin/pages/RestaurantPromotionsPage.jsx';
 
 // Client pages
-import { ClientDashboard }    from '../../features/client/pages/ClientDashboard.jsx';
-import { MyReservationsPage } from '../../features/client/pages/MyReservationsPage.jsx';
-import { MyOrdersPage }       from '../../features/client/pages/MyOrdersPage.jsx';
-import { ProfilePage }        from '../../features/client/pages/ProfilePage.jsx';
+import { ClientDashboard }      from '../../features/client/pages/ClientDashboard.jsx';
+import { ClientMenuPage }       from '../../features/client/pages/ClientMenuPage.jsx';
+import { ClientEventsPage }     from '../../features/client/pages/ClientEventsPage.jsx';
+import { MyReservationsPage }   from '../../features/client/pages/MyReservationsPage.jsx';
+import { MyOrdersPage }         from '../../features/client/pages/MyOrdersPage.jsx';
+import { ProfilePage }          from '../../features/client/pages/ProfilePage.jsx';
+import { ClientRatingsPage }    from '../../features/client/pages/ClientRatingsPage.jsx';
+import { ClientPromotionsPage } from '../../features/client/pages/ClientPromotionsPage.jsx';
 
 const Guard = ({ role, children }) => (
   <ProtectedRoutes>
@@ -50,7 +57,9 @@ export const AppRoutes = () => (
       <Route path='users'       element={<UsersPage />} />
       <Route path='restaurants' element={<AdminRestaurantsPage />} />
       <Route path='events'      element={<AdminEventsPage />} />
+      <Route path='promotions'  element={<AdminPromotionsPage />} />
       <Route path='reports'     element={<AdminReportsPage />} />
+      <Route path='profile'     element={<ProfilePage />} />
     </Route>
 
     {/* Restaurant Admin */}
@@ -58,16 +67,23 @@ export const AppRoutes = () => (
       <Route index                element={<RestaurantDashboard />} />
       <Route path='tables'        element={<TablesPage />} />
       <Route path='menu'          element={<MenuPage />} />
+      <Route path='inventory'     element={<InventoryPage />} />
       <Route path='orders'        element={<OrdersPage />} />
       <Route path='reservations'  element={<ReservationsPage />} />
+      <Route path='promotions'    element={<RestaurantPromotionsPage />} />
       <Route path='reports'       element={<RestaurantReportsPage />} />
+      <Route path='profile'       element={<ProfilePage />} />
     </Route>
 
     {/* Client */}
     <Route path='/dashboard/client' element={<Guard role='CLIENT'><DashboardPage /></Guard>}>
       <Route index                element={<ClientDashboard />} />
+      <Route path='menu'          element={<ClientMenuPage />} />
+      <Route path='events'        element={<ClientEventsPage />} />
+      <Route path='promotions'    element={<ClientPromotionsPage />} />
       <Route path='reservations'  element={<MyReservationsPage />} />
       <Route path='orders'        element={<MyOrdersPage />} />
+      <Route path='ratings'       element={<ClientRatingsPage />} />
       <Route path='profile'       element={<ProfilePage />} />
     </Route>
 

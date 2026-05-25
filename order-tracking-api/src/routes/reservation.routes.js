@@ -170,5 +170,7 @@ router.put('/:id/cancel', cancelReservationValidator, validate, controller.cance
  */
 router.put('/:id/complete', completeReservationValidator, validate, controller.completeReservation);
 
+router.put('/:id', controller.updateReservation);
+
 // Exportar el router
 module.exports = router;

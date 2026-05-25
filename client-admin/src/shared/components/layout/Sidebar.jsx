@@ -2,7 +2,8 @@ import { NavLink } from 'react-router-dom';
 import { useAuthStore } from '../../../features/auth/store/authStore';
 import {
   DashboardIcon, UsersIcon, BuildingIcon, CalendarIcon, BarChartIcon,
-  UtensilsIcon, TableIcon, BagIcon, UserIcon, LogOutIcon, CloseIcon, ClipboardIcon,
+  UtensilsIcon, TableIcon, BagIcon, UserIcon, CloseIcon, ClipboardIcon,
+  StarIcon, CreditCardIcon,
 } from '../ui/Icons.jsx';
 
 const NAV = {
@@ -11,33 +12,40 @@ const NAV = {
     { label: 'Usuarios',     path: '/dashboard/admin/users',        Icon: UsersIcon },
     { label: 'Restaurantes', path: '/dashboard/admin/restaurants',  Icon: BuildingIcon },
     { label: 'Eventos',      path: '/dashboard/admin/events',       Icon: CalendarIcon },
+    { label: 'Promociones',  path: '/dashboard/admin/promotions',   Icon: CreditCardIcon },
     { label: 'Reportes',     path: '/dashboard/admin/reports',      Icon: BarChartIcon },
+    { label: 'Mi Perfil',    path: '/dashboard/admin/profile',      Icon: UserIcon },
   ],
   RESTAURANT_ADMIN: [
     { label: 'Dashboard',      path: '/dashboard/restaurant',                Icon: DashboardIcon },
     { label: 'Mesas',          path: '/dashboard/restaurant/tables',         Icon: TableIcon },
     { label: 'Menú',           path: '/dashboard/restaurant/menu',           Icon: UtensilsIcon },
+    { label: 'Inventario',     path: '/dashboard/restaurant/inventory',      Icon: ClipboardIcon },
     { label: 'Pedidos',        path: '/dashboard/restaurant/orders',         Icon: BagIcon },
     { label: 'Reservaciones',  path: '/dashboard/restaurant/reservations',   Icon: CalendarIcon },
+    { label: 'Promociones',    path: '/dashboard/restaurant/promotions',     Icon: CreditCardIcon },
     { label: 'Reportes',       path: '/dashboard/restaurant/reports',        Icon: BarChartIcon },
+    { label: 'Mi Perfil',      path: '/dashboard/restaurant/profile',        Icon: UserIcon },
   ],
   CLIENT: [
-    { label: 'Explorar',          path: '/dashboard/client',               Icon: BuildingIcon },
-    { label: 'Mis Reservaciones', path: '/dashboard/client/reservations',  Icon: CalendarIcon },
-    { label: 'Mis Pedidos',       path: '/dashboard/client/orders',        Icon: ClipboardIcon },
-    { label: 'Mi Perfil',         path: '/dashboard/client/profile',       Icon: UserIcon },
+    { label: 'Explorar',          path: '/dashboard/client',                  Icon: BuildingIcon },
+    { label: 'Menú',              path: '/dashboard/client/menu',             Icon: UtensilsIcon },
+    { label: 'Eventos',           path: '/dashboard/client/events',           Icon: CalendarIcon },
+    { label: 'Promociones',       path: '/dashboard/client/promotions',       Icon: CreditCardIcon },
+    { label: 'Mis Reservaciones', path: '/dashboard/client/reservations',     Icon: CalendarIcon },
+    { label: 'Mis Pedidos',       path: '/dashboard/client/orders',           Icon: ClipboardIcon },
+    { label: 'Calificaciones',    path: '/dashboard/client/ratings',          Icon: StarIcon },
+    { label: 'Mi Perfil',         path: '/dashboard/client/profile',          Icon: UserIcon },
   ],
 };
-
 const ROLE_LABEL = {
-  PLATFORM_ADMIN: 'Administrador',
+  PLATFORM_ADMIN:   'Administrador',
   RESTAURANT_ADMIN: 'Admin. Restaurante',
-  CLIENT: 'Cliente',
+  CLIENT:           'Cliente',
 };
 
 export const Sidebar = ({ isOpen, onClose }) => {
   const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
   const role = user?.role ?? 'CLIENT';
   const items = NAV[role] ?? NAV.CLIENT;
 
@@ -104,28 +112,8 @@ export const Sidebar = ({ isOpen, onClose }) => {
           ))}
         </nav>
 
-        {/* Divider */}
-        <div className="gold-divider mx-4" />
-
-        {/* User + logout */}
-        <div className="px-4 py-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-fp-gold-dim border border-fp-gold/30 flex items-center justify-center flex-shrink-0">
-              <UserIcon className="w-4 h-4 text-fp-gold" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-fp-text text-sm font-medium truncate">{user?.username ?? 'Usuario'}</p>
-              <p className="text-fp-subtle text-xs truncate">{ROLE_LABEL[role]}</p>
-            </div>
-          </div>
-          <button
-            onClick={logout}
-            className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-fp-muted hover:text-fp-danger hover:bg-fp-danger-dim transition-colors duration-150"
-          >
-            <LogOutIcon className="w-4 h-4" />
-            Cerrar sesión
-          </button>
-        </div>
+        {/* Bottom padding */}
+        <div className="h-4" />
       </aside>
     </>
   );

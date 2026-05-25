@@ -6,7 +6,7 @@ import { getOrders }       from '../../../shared/apis/orders.js';
 import { getReservations } from '../../../shared/apis/reservations.js';
 import {
   BuildingIcon, CalendarIcon, BagIcon,
-  StarIcon, MapPinIcon,
+  StarIcon, MapPinIcon, SearchIcon,
 } from '../../../shared/components/ui/Icons.jsx';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -38,10 +38,14 @@ const RestaurantCard = ({ restaurant }) => (
         </h4>
         <span className="text-fp-subtle text-xs">{restaurant.category}</span>
       </div>
-      <span className="flex-shrink-0 ml-2 flex items-center gap-1">
-        <StarIcon className="w-3.5 h-3.5 text-fp-gold" />
-        <span className="text-fp-gold text-xs font-medium">4.5</span>
-      </span>
+      {restaurant.rating > 0 && (
+        <span className="flex-shrink-0 ml-2 flex items-center gap-1">
+          <StarIcon className="w-3.5 h-3.5 text-fp-gold" />
+          <span className="text-fp-gold text-xs font-medium">
+            {Number(restaurant.rating).toFixed(1)}
+          </span>
+        </span>
+      )}
     </div>
     {restaurant.address && (
       <div className="flex items-center gap-1 mt-2">
@@ -60,12 +64,13 @@ export const ClientDashboard = () => {
   const [stats, setStats]             = useState({ orders: null, reservations: null, restaurants: null });
   const [loading, setLoading]         = useState(true);
   const [resLoading, setResLoading]   = useState(true);
+  const [search, setSearch]           = useState('');
 
   useEffect(() => {
     // Load stats
     Promise.allSettled([
-      getOrders(),
-      getReservations(),
+      getOrders({ userId: user?.id }),
+      getReservations({ userId: user?.id }),
       getRestaurants({ isActive: true, limit: 1 }),
     ]).then(([orders, reservations, restaurants]) => {
       const orderList = Array.isArray(orders.value?.data) ? orders.value.data : [];
@@ -82,7 +87,7 @@ export const ClientDashboard = () => {
       .then((r) => setRestaurants(r.data?.data ?? []))
       .catch(() => setRestaurants([]))
       .finally(() => setResLoading(false));
-  }, []);
+  }, [user?.id]);
 
   return (
     <div className="space-y-6 animate-fadeUp">
@@ -108,24 +113,41 @@ export const ClientDashboard = () => {
           <BuildingIcon className="w-4 h-4 text-fp-subtle" />
         </div>
 
+        {/* Search */}
+        <div className="relative mb-4">
+          <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fp-subtle" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar restaurante…"
+            className="w-full pl-9 pr-3 py-2 bg-fp-bg border border-fp-border rounded-lg text-fp-text text-sm placeholder-fp-subtle focus:outline-none focus:border-fp-gold/50 transition-colors"
+          />
+        </div>
+
         {resLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-full" />)}
           </div>
-        ) : restaurants.length === 0 ? (
-          <p className="text-fp-subtle text-sm text-center py-8">Sin restaurantes disponibles</p>
+        ) : restaurants.filter((r) => !search || r.name.toLowerCase().includes(search.toLowerCase())).length === 0 ? (
+          <p className="text-fp-subtle text-sm text-center py-8">
+            {search ? 'Sin resultados para esa búsqueda' : 'Sin restaurantes disponibles'}
+          </p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {restaurants.map((r) => <RestaurantCard key={r._id} restaurant={r} />)}
+            {restaurants
+              .filter((r) => !search || r.name.toLowerCase().includes(search.toLowerCase()))
+              .map((r) => <RestaurantCard key={r._id} restaurant={r} />)}
           </div>
         )}
       </div>
 
       {/* Quick access */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { Icon: BagIcon,      label: 'Mis pedidos',      path: '/dashboard/client/orders' },
-          { Icon: CalendarIcon, label: 'Mis reservaciones', path: '/dashboard/client/reservations' },
+          { Icon: BagIcon,      label: 'Mis pedidos',       path: '/dashboard/client/orders' },
+          { Icon: CalendarIcon, label: 'Mis reservaciones',  path: '/dashboard/client/reservations' },
+          { Icon: BuildingIcon, label: 'Menú',               path: '/dashboard/client/menu' },
+          { Icon: CalendarIcon, label: 'Eventos',            path: '/dashboard/client/events' },
         ].map(({ Icon, label, path }) => (
           <Link key={path} to={path}
             className="flex items-center gap-2.5 p-3 rounded-lg border border-fp-border hover:border-fp-gold/30 hover:bg-fp-gold-dim transition-colors group">

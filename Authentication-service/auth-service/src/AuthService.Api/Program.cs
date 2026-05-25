@@ -6,6 +6,7 @@ using NetEscapades.AspNetCore.SecurityHeaders.Infrastructure;
 using Serilog;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.Hosting.Server.Features;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -128,6 +129,18 @@ using (var scope = app.Services.CreateScope())
         logger.LogInformation("Verificando DB...");
         // Crear DB si no existe
         await context.Database.EnsureCreatedAsync();
+
+        // Agregar columna profile_picture si no existe (columna añadida después de la creación inicial)
+        try
+        {
+            await context.Database.ExecuteSqlRawAsync(
+                "ALTER TABLE user_profiles ADD COLUMN IF NOT EXISTS profile_picture VARCHAR(255) NOT NULL DEFAULT ''");
+            logger.LogInformation("Columna profile_picture verificada correctamente");
+        }
+        catch (Exception colEx)
+        {
+            logger.LogWarning(colEx, "No se pudo ejecutar ALTER TABLE para profile_picture — continuando de todas formas");
+        }
 
         logger.LogInformation("DB lista. Ejecutando seed...");
         await DataSeeder.SeedAsync(context);

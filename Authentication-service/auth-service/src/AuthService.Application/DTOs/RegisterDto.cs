@@ -25,4 +25,8 @@ public class RegisterDto
     public string Phone { get; set; } = string.Empty;
 
     public IFileData? ProfilePicture { get; set; }
+
+    // URL de foto de perfil subida previamente al servidor de medios
+    [MaxLength(255)]
+    public string? ProfilePictureUrl { get; set; }
 }

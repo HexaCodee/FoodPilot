@@ -16,7 +16,12 @@ const reservationSchema = new mongoose.Schema({
         type: String,
         enum: ['ACTIVA', 'CANCELADA', 'COMPLETADA'],
         default: 'ACTIVA'
-    }
+    },
+    userId: {
+        type: String,
+        trim: true,
+    },
+    restaurantId: { type: String, trim: true }
 }, { timestamps: true });
 
 // Asegurar que solo haya una reserva activa por mesa y horario

@@ -12,11 +12,12 @@ exports.createOrder = async (req, res, next) => {
     }
 };
 
-// Obtener todos los pedidos
+// Obtener todos los pedidos (filtrar por userId si se proporciona)
 exports.getOrders = async (req, res, next) => {
     try {
-        // Obtener todos los pedidos de la base de datos
-        const orders = await Order.find();
+        const filter = {};
+        if (req.query.userId) filter.userId = req.query.userId;
+        const orders = await Order.find(filter).sort({ createdAt: -1 });
         res.json(orders);
     } catch (error) {
         next(error);
@@ -44,6 +45,22 @@ exports.updateStatus = async (req, res, next) => {
             { status: req.body.status },
             { new: true }
         );
+        res.json(order);
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Cancelar un pedido (solo si está PENDIENTE)
+exports.cancelOrder = async (req, res, next) => {
+    try {
+        const order = await Order.findById(req.params.id);
+        if (!order) return res.status(404).json({ message: 'Pedido no encontrado' });
+        if (order.status !== 'PENDIENTE') {
+            return res.status(400).json({ message: 'Solo se pueden cancelar pedidos pendientes' });
+        }
+        order.status = 'CANCELADO';
+        await order.save();
         res.json(order);
     } catch (error) {
         next(error);

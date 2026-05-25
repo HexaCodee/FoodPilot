@@ -95,9 +95,14 @@ public class UserManagementService(IUserRepository users, IRoleRepository roles)
 
         var (rawUsers, total) = await users.GetAllAsync(search, role, page, limit);
 
+        // Obtener fotos de perfil en una sola consulta para toda la página
+        var ids = rawUsers.Select(u => u.Id).ToList();
+        var pictures = await users.GetProfilePicturesBatchAsync(ids);
+
         var dtos = rawUsers.Select(u =>
         {
             var primaryRole = u.UserRoles.FirstOrDefault()?.Role?.Name ?? string.Empty;
+            pictures.TryGetValue(u.Id, out var pic);
             return new UserResponseDto
             {
                 Id = u.Id,
@@ -105,6 +110,7 @@ public class UserManagementService(IUserRepository users, IRoleRepository roles)
                 Surname = u.Surname,
                 Username = u.Username,
                 Email = u.Email,
+                ProfilePicture = pic ?? string.Empty,
                 Phone = u.UserProfile?.Phone ?? string.Empty,
                 Role = primaryRole,
                 Status = u.Status,
@@ -139,5 +145,58 @@ public class UserManagementService(IUserRepository users, IRoleRepository roles)
             CreatedAt = user.CreatedAt,
             UpdatedAt = user.UpdatedAt
         };
+    }
+
+    public async Task<UserDetailsDto> UpdateProfileAsync(string userId, string username, string? profilePictureUrl = null)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new ArgumentException("Invalid userId", nameof(userId));
+
+        username = username.Trim();
+
+        // Check uniqueness (skip if same user keeps same username)
+        var existing = await users.GetByUsernameAsync(username);
+        if (existing != null && existing.Id != userId)
+            throw new InvalidOperationException("El nombre de usuario ya está en uso");
+
+        var user = await users.GetByIdAsync(userId);
+        user.Username  = username;
+        user.UpdatedAt = DateTime.UtcNow;
+        await users.UpdateAsync(user);
+
+        // Save profile picture via raw SQL (not through EF Core model)
+        if (profilePictureUrl != null)
+            await users.UpdateProfilePictureAsync(userId, profilePictureUrl);
+
+        var role = user.UserRoles.FirstOrDefault()?.Role?.Name ?? string.Empty;
+
+        // Return the picture URL that was just saved (or fetch current one only when no new URL was provided)
+        string picUrl;
+        if (profilePictureUrl != null)
+        {
+            picUrl = profilePictureUrl;
+        }
+        else
+        {
+            picUrl = await users.GetProfilePictureAsync(userId);
+        }
+
+        return new UserDetailsDto
+        {
+            Id             = user.Id,
+            Username       = user.Username,
+            ProfilePicture = picUrl,
+            Role           = role,
+        };
+    }
+
+    public async Task DeleteOwnAccountAsync(string userId)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new ArgumentException("Invalid userId", nameof(userId));
+
+        var deleted = await users.DeleteAsync(userId);
+        if (!deleted)
+            throw new InvalidOperationException("No se pudo eliminar la cuenta");
     }
 }

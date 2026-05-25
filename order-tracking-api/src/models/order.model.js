@@ -19,9 +19,15 @@ const orderSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['PENDIENTE', 'ENVIADO', 'ENTREGADO'],
+        enum: ['PENDIENTE', 'ENVIADO', 'ENTREGADO', 'CANCELADO'],
         default: 'PENDIENTE'
-    }
+    },
+    userId: {
+        type: String,
+        trim: true,
+    },
+    price: { type: Number, min: 0 },
+    restaurantId: { type: String, trim: true }
 }, { timestamps: true });
 
 // Exportar el modelo Order

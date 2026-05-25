@@ -94,6 +94,12 @@ public class AuthService(
         // Guardar en DB
         var createdUser = await userRepository.CreateAsync(user);
 
+        // Guardar foto de perfil si se proporcionó URL
+        if (!string.IsNullOrWhiteSpace(registerDto.ProfilePictureUrl))
+        {
+            await userRepository.UpdateProfilePictureAsync(createdUser.Id, registerDto.ProfilePictureUrl);
+        }
+
         logger.LogUserRegistered(createdUser.Username);
 
         // Enviar email verificación en background
@@ -164,13 +170,16 @@ public class AuthService(
         var token = jwtTokenService.GenerateToken(user);
         var expiryMinutes = int.Parse(configuration["JwtSettings:ExpiryInMinutes"] ?? "30");
 
+        // Cargar foto de perfil via raw SQL (sin tocar el modelo de EF Core)
+        var profilePicture = await userRepository.GetProfilePictureAsync(user.Id);
+
         // Respuesta con token
         return new AuthResponseDto
         {
             Success = true,
             Message = "Login exitoso",
             Token = token,
-            UserDetails = MapToUserDetailsDto(user),
+            UserDetails = MapToUserDetailsDto(user, profilePicture),
             ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes)
         };
     }
@@ -196,13 +205,14 @@ public class AuthService(
     }
 
     // Mapear User a UserDetailsDto
-    private UserDetailsDto MapToUserDetailsDto(User user)
+    private static UserDetailsDto MapToUserDetailsDto(User user, string profilePicture = "")
     {
         return new UserDetailsDto
         {
-            Id = user.Id,
-            Username = user.Username,
-            Role = user.UserRoles.FirstOrDefault()?.Role?.Name ?? RoleConstants.CLIENT
+            Id             = user.Id,
+            Username       = user.Username,
+            ProfilePicture = profilePicture,
+            Role           = user.UserRoles.FirstOrDefault()?.Role?.Name ?? RoleConstants.CLIENT
         };
     }
 

@@ -3,6 +3,7 @@ using AuthService.Domain.Entities;
 using AuthService.Domain.Interfaces;
 using AuthService.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Data;
 
 namespace AuthService.Persistence.Repositories;
 
@@ -181,6 +182,79 @@ public class UserRepository(ApplicationDbContext context) : IUserRepository
             .ToListAsync();
 
         return (users, total);
+    }
+
+    // Leer URL de foto de perfil directamente (sin pasar por el modelo de EF Core)
+    public async Task<string> GetProfilePictureAsync(string userId)
+    {
+        try
+        {
+            // Abrir una conexión independiente para no interferir con la conexión activa de EF Core
+            var connStr = context.Database.GetConnectionString()!;
+            await using var conn = new Npgsql.NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = "SELECT COALESCE(profile_picture, '') FROM user_profiles WHERE user_id = @uid";
+            cmd.CommandTimeout = 10; // 10 s máximo
+            cmd.Parameters.AddWithValue("@uid", userId);
+            var result = await cmd.ExecuteScalarAsync();
+            return result as string ?? string.Empty;
+        }
+        catch
+        {
+            // Columna aún no existe en la DB — devolver vacío
+            return string.Empty;
+        }
+    }
+
+    // Leer fotos de perfil para múltiples usuarios en una sola consulta (evita N+1)
+    public async Task<IReadOnlyDictionary<string, string>> GetProfilePicturesBatchAsync(IEnumerable<string> userIds)
+    {
+        var result = new Dictionary<string, string>();
+        try
+        {
+            var ids = userIds.ToList();
+            if (ids.Count == 0) return result;
+
+            var connStr = context.Database.GetConnectionString()!;
+            await using var conn = new Npgsql.NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+            await using var cmd = conn.CreateCommand();
+
+            // Construir IN (@p0, @p1, ...) dinámicamente — compatible con cualquier versión de Npgsql
+            var paramNames = ids.Select((_, i) => $"@p{i}").ToList();
+            cmd.CommandText = $"SELECT user_id, COALESCE(profile_picture, '') FROM user_profiles WHERE user_id IN ({string.Join(", ", paramNames)})";
+            cmd.CommandTimeout = 10;
+            for (var i = 0; i < ids.Count; i++)
+                cmd.Parameters.AddWithValue($"@p{i}", ids[i]);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            while (await reader.ReadAsync())
+                result[reader.GetString(0)] = reader.GetString(1);
+        }
+        catch { /* columna aún no existe — devolvemos dict vacío */ }
+        return result;
+    }
+
+    // Guardar URL de foto de perfil directamente (sin pasar por el modelo de EF Core)
+    public async Task UpdateProfilePictureAsync(string userId, string pictureUrl)
+    {
+        try
+        {
+            var connStr = context.Database.GetConnectionString()!;
+            await using var conn = new Npgsql.NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = "UPDATE user_profiles SET profile_picture = @pic WHERE user_id = @uid";
+            cmd.CommandTimeout = 10;
+            cmd.Parameters.AddWithValue("@pic", pictureUrl);
+            cmd.Parameters.AddWithValue("@uid", userId);
+            await cmd.ExecuteNonQueryAsync();
+        }
+        catch
+        {
+            // Columna aún no existe — la ignoramos, el ALTER TABLE la añadirá al reiniciar
+        }
     }
 
     // Activar o desactivar usuario
