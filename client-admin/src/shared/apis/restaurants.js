@@ -15,17 +15,12 @@ export const getRestaurants = ({ search, isActive, category, page = 1, limit = 2
   return axiosAdmin.get(BASE, { params });
 };
 
-export const getRestaurantById = (id) =>
-  axiosAdmin.get(`${BASE}/${id}`);
+export const getRestaurantById = (id) => axiosAdmin.get(`${BASE}/${id}`);
 
-export const createRestaurant = (data) =>
-  axiosAdmin.post(BASE, data);
+export const createRestaurant = (data) => axiosAdmin.post(BASE, data);
 
-export const updateRestaurant = (id, data) =>
-  axiosAdmin.put(`${BASE}/${id}`, data);
+export const updateRestaurant = (id, data) => axiosAdmin.put(`${BASE}/${id}`, data);
 
-export const activateRestaurant = (id) =>
-  axiosAdmin.patch(`${BASE}/${id}/activate`);
+export const activateRestaurant = (id) => axiosAdmin.patch(`${BASE}/${id}/activate`);
 
-export const deactivateRestaurant = (id) =>
-  axiosAdmin.patch(`${BASE}/${id}/deactivate`);
+export const deactivateRestaurant = (id) => axiosAdmin.patch(`${BASE}/${id}/deactivate`);

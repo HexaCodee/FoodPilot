@@ -1,16 +1,16 @@
-import { Router } from "express";
+import { Router } from 'express';
 // ...existing code...
-import { validateCreateMenu } from "../../middlewares/menu-validator.js";
+import { validateCreateMenu } from '../../middlewares/menu-validator.js';
 
 const router = Router();
 
 import {
-    createMenuController,
-    getMenusController,
-    getMenuByIdController,
-    updateMenuController,
-    changeMenuStatusController
-} from "./menu.controller.js";
+  createMenuController,
+  getMenusController,
+  getMenuByIdController,
+  updateMenuController,
+  changeMenuStatusController,
+} from './menu.controller.js';
 
 /**
  * @swagger

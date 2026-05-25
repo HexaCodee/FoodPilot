@@ -1,5 +1,11 @@
 import { Router } from 'express';
-import { getAllUsageStats, getUsageStatsById, createUsageStats, updateUsageStats, deleteUsageStats } from './usageStats.controller.js';
+import {
+  getAllUsageStats,
+  getUsageStatsById,
+  createUsageStats,
+  updateUsageStats,
+  deleteUsageStats,
+} from './usageStats.controller.js';
 
 const router = Router();
 

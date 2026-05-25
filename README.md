@@ -18,21 +18,21 @@ FoodPilot/
 
 ## Roles del sistema
 
-| Rol | Descripción |
-|-----|-------------|
-| `PLATFORM_ADMIN` | Administrador de la plataforma: gestiona usuarios, restaurantes y reportes globales |
+| Rol                | Descripción                                                                             |
+| ------------------ | --------------------------------------------------------------------------------------- |
+| `PLATFORM_ADMIN`   | Administrador de la plataforma: gestiona usuarios, restaurantes y reportes globales     |
 | `RESTAURANT_ADMIN` | Administrador de restaurante: gestiona su propio establecimiento, menú, mesas y pedidos |
-| `CLIENT` | Cliente: busca restaurantes, hace reservaciones y realiza pedidos |
+| `CLIENT`           | Cliente: busca restaurantes, hace reservaciones y realiza pedidos                       |
 
 ## Tecnologías
 
-| Servicio | Lenguaje | Framework | Base de datos | Puerto |
-|----------|----------|-----------|---------------|--------|
-| Authentication-service | C# | ASP.NET Core 8 | PostgreSQL | 5126 |
-| restaurant-admin | JavaScript | Express 5 | MongoDB | 3020 |
-| event-service | JavaScript | Express 5 | MongoDB | (ver .env) |
-| order-tracking-api | JavaScript | Express | MongoDB | 3000 |
-| client-admin | JavaScript | React + Vite | — | 5173 |
+| Servicio               | Lenguaje   | Framework      | Base de datos | Puerto     |
+| ---------------------- | ---------- | -------------- | ------------- | ---------- |
+| Authentication-service | C#         | ASP.NET Core 8 | PostgreSQL    | 5126       |
+| restaurant-admin       | JavaScript | Express 5      | MongoDB       | 3020       |
+| event-service          | JavaScript | Express 5      | MongoDB       | (ver .env) |
+| order-tracking-api     | JavaScript | Express        | MongoDB       | 3000       |
+| client-admin           | JavaScript | React + Vite   | —             | 5173       |
 
 ---
 
@@ -62,14 +62,14 @@ cp Authentication-service/auth-service/src/AuthService.Api/appsettings.example.j
 
 Edita `appsettings.json` y reemplaza los siguientes campos:
 
-| Campo | Descripción |
-|-------|-------------|
+| Campo                                 | Descripción                                                                |
+| ------------------------------------- | -------------------------------------------------------------------------- |
 | `ConnectionStrings.DefaultConnection` | Cadena de conexión a PostgreSQL (host, database, username, password, port) |
-| `JwtSettings.SecretKey` | Clave secreta para firmar tokens JWT (mínimo 32 caracteres) |
-| `SmtpSettings.Username` | Tu correo de Gmail |
-| `SmtpSettings.Password` | Tu App Password de Google (no tu contraseña normal) |
-| `SmtpSettings.FromEmail` | Mismo correo de Gmail |
-| `AppSettings.FrontendUrl` | URL del frontend, por defecto `http://localhost:5173` |
+| `JwtSettings.SecretKey`               | Clave secreta para firmar tokens JWT (mínimo 32 caracteres)                |
+| `SmtpSettings.Username`               | Tu correo de Gmail                                                         |
+| `SmtpSettings.Password`               | Tu App Password de Google (no tu contraseña normal)                        |
+| `SmtpSettings.FromEmail`              | Mismo correo de Gmail                                                      |
+| `AppSettings.FrontendUrl`             | URL del frontend, por defecto `http://localhost:5173`                      |
 
 > Para generar una App Password de Google: [Cuenta de Google → Seguridad → Contraseñas de aplicaciones](https://myaccount.google.com/apppasswords) (requiere verificación en dos pasos activa).
 
@@ -83,14 +83,14 @@ cp restaurant-admin/.env.example restaurant-admin/.env
 
 Edita `restaurant-admin/.env`:
 
-| Variable | Descripción |
-|----------|-------------|
-| `PORT` | Puerto del servidor (por defecto: `3020`) |
-| `URI_MONGODB` | URI de conexión a MongoDB |
-| `JWT_SECRET` | Clave secreta JWT (debe coincidir con la del auth service) |
-| `JWT_ISSUER` | Emisor del token (por defecto: `FoodPilot`) |
-| `JWT_AUDIENCE` | Audiencia del token (por defecto: `FoodPilot`) |
-| `JWT_EXPIRES_IN` | Tiempo de expiración (por defecto: `1h`) |
+| Variable         | Descripción                                                |
+| ---------------- | ---------------------------------------------------------- |
+| `PORT`           | Puerto del servidor (por defecto: `3020`)                  |
+| `URI_MONGODB`    | URI de conexión a MongoDB                                  |
+| `JWT_SECRET`     | Clave secreta JWT (debe coincidir con la del auth service) |
+| `JWT_ISSUER`     | Emisor del token (por defecto: `FoodPilot`)                |
+| `JWT_AUDIENCE`   | Audiencia del token (por defecto: `FoodPilot`)             |
+| `JWT_EXPIRES_IN` | Tiempo de expiración (por defecto: `1h`)                   |
 
 ---
 
@@ -118,9 +118,9 @@ cp client-admin/.env.example client-admin/.env
 
 Edita `client-admin/.env`:
 
-| Variable | Valor por defecto |
-|----------|-------------------|
-| `VITE_AUTH_URL` | `http://localhost:5126/api/v1` |
+| Variable         | Valor por defecto                          |
+| ---------------- | ------------------------------------------ |
+| `VITE_AUTH_URL`  | `http://localhost:5126/api/v1`             |
 | `VITE_ADMIN_URL` | `http://localhost:3020/restaurantAdmin/v1` |
 
 ---
@@ -202,57 +202,57 @@ Disponible en: `http://localhost:5173`
 
 ### Authentication-service — `http://localhost:5126/api/v1`
 
-| Método | Ruta | Descripción | Auth |
-|--------|------|-------------|------|
-| POST | `/auth/register` | Registrar usuario | No |
-| POST | `/auth/login` | Iniciar sesión | No |
-| POST | `/auth/verify-email` | Verificar correo | No |
-| POST | `/auth/forgot-password` | Solicitar recuperación de contraseña | No |
-| POST | `/auth/reset-password` | Restablecer contraseña | No |
-| GET | `/health` | Estado del servicio | No |
+| Método | Ruta                    | Descripción                          | Auth |
+| ------ | ----------------------- | ------------------------------------ | ---- |
+| POST   | `/auth/register`        | Registrar usuario                    | No   |
+| POST   | `/auth/login`           | Iniciar sesión                       | No   |
+| POST   | `/auth/verify-email`    | Verificar correo                     | No   |
+| POST   | `/auth/forgot-password` | Solicitar recuperación de contraseña | No   |
+| POST   | `/auth/reset-password`  | Restablecer contraseña               | No   |
+| GET    | `/health`               | Estado del servicio                  | No   |
 
 ### restaurant-admin — `http://localhost:3020/restaurantAdmin/v1`
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/restaurants` | Crear restaurante |
-| GET | `/restaurants` | Listar restaurantes |
-| GET | `/restaurants/:id` | Obtener restaurante |
-| PUT | `/restaurants/:id` | Actualizar restaurante |
-| PATCH | `/restaurants/:id/activate` | Activar restaurante |
-| PATCH | `/restaurants/:id/deactivate` | Desactivar restaurante |
-| POST | `/menus` | Crear plato |
-| GET | `/menus` | Listar platos |
-| PUT | `/menus/:id` | Actualizar plato |
-| PATCH | `/menus/:id/activate` | Activar plato |
-| PATCH | `/menus/:id/deactivate` | Desactivar plato |
-| POST | `/tables` | Crear mesa |
-| GET | `/tables` | Listar mesas |
-| PUT | `/tables/:id` | Actualizar mesa |
-| PATCH | `/tables/:id/activate` | Activar mesa |
-| PATCH | `/tables/:id/deactivate` | Desactivar mesa |
+| Método | Ruta                          | Descripción            |
+| ------ | ----------------------------- | ---------------------- |
+| POST   | `/restaurants`                | Crear restaurante      |
+| GET    | `/restaurants`                | Listar restaurantes    |
+| GET    | `/restaurants/:id`            | Obtener restaurante    |
+| PUT    | `/restaurants/:id`            | Actualizar restaurante |
+| PATCH  | `/restaurants/:id/activate`   | Activar restaurante    |
+| PATCH  | `/restaurants/:id/deactivate` | Desactivar restaurante |
+| POST   | `/menus`                      | Crear plato            |
+| GET    | `/menus`                      | Listar platos          |
+| PUT    | `/menus/:id`                  | Actualizar plato       |
+| PATCH  | `/menus/:id/activate`         | Activar plato          |
+| PATCH  | `/menus/:id/deactivate`       | Desactivar plato       |
+| POST   | `/tables`                     | Crear mesa             |
+| GET    | `/tables`                     | Listar mesas           |
+| PUT    | `/tables/:id`                 | Actualizar mesa        |
+| PATCH  | `/tables/:id/activate`        | Activar mesa           |
+| PATCH  | `/tables/:id/deactivate`      | Desactivar mesa        |
 
 ### event-service — `http://localhost:{PORT}/eventService/v1`
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST/GET/PUT/DELETE | `/events` | CRUD de eventos |
-| POST/GET/PUT/DELETE | `/sales-reports` | CRUD de reportes de ventas |
-| POST/GET/PUT/DELETE | `/usage-stats` | CRUD de estadísticas de uso |
+| Método              | Ruta             | Descripción                 |
+| ------------------- | ---------------- | --------------------------- |
+| POST/GET/PUT/DELETE | `/events`        | CRUD de eventos             |
+| POST/GET/PUT/DELETE | `/sales-reports` | CRUD de reportes de ventas  |
+| POST/GET/PUT/DELETE | `/usage-stats`   | CRUD de estadísticas de uso |
 
 ### order-tracking-api — `http://localhost:3000/api`
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| POST | `/orders` | Crear pedido |
-| GET | `/orders` | Listar pedidos |
-| GET | `/orders/:id` | Obtener pedido |
-| PUT | `/orders/:id/status` | Actualizar estado del pedido |
-| POST | `/reservations` | Crear reservación |
-| GET | `/reservations` | Listar reservaciones |
-| GET | `/reservations/:id` | Obtener reservación |
-| PUT | `/reservations/:id/cancel` | Cancelar reservación |
-| PUT | `/reservations/:id/complete` | Completar reservación |
+| Método | Ruta                         | Descripción                  |
+| ------ | ---------------------------- | ---------------------------- |
+| POST   | `/orders`                    | Crear pedido                 |
+| GET    | `/orders`                    | Listar pedidos               |
+| GET    | `/orders/:id`                | Obtener pedido               |
+| PUT    | `/orders/:id/status`         | Actualizar estado del pedido |
+| POST   | `/reservations`              | Crear reservación            |
+| GET    | `/reservations`              | Listar reservaciones         |
+| GET    | `/reservations/:id`          | Obtener reservación          |
+| PUT    | `/reservations/:id/cancel`   | Cancelar reservación         |
+| PUT    | `/reservations/:id/complete` | Completar reservación        |
 
 ---
 
@@ -269,6 +269,7 @@ Repositorio: https://github.com/IN6AMProm33/auth-service-dotnet.git
 MIT License
 
 ---
+
 ---
 
 # English
@@ -291,21 +292,21 @@ FoodPilot/
 
 ## User Roles
 
-| Role | Description |
-|------|-------------|
-| `PLATFORM_ADMIN` | Platform administrator: manages users, restaurants, and global reports |
+| Role               | Description                                                                 |
+| ------------------ | --------------------------------------------------------------------------- |
+| `PLATFORM_ADMIN`   | Platform administrator: manages users, restaurants, and global reports      |
 | `RESTAURANT_ADMIN` | Restaurant admin: manages their own establishment, menu, tables, and orders |
-| `CLIENT` | Customer: browses restaurants, makes reservations, and places orders |
+| `CLIENT`           | Customer: browses restaurants, makes reservations, and places orders        |
 
 ## Technologies
 
-| Service | Language | Framework | Database | Port |
-|---------|----------|-----------|----------|------|
-| Authentication-service | C# | ASP.NET Core 8 | PostgreSQL | 5126 |
-| restaurant-admin | JavaScript | Express 5 | MongoDB | 3020 |
-| event-service | JavaScript | Express 5 | MongoDB | (see .env) |
-| order-tracking-api | JavaScript | Express | MongoDB | 3000 |
-| client-admin | JavaScript | React + Vite | — | 5173 |
+| Service                | Language   | Framework      | Database   | Port       |
+| ---------------------- | ---------- | -------------- | ---------- | ---------- |
+| Authentication-service | C#         | ASP.NET Core 8 | PostgreSQL | 5126       |
+| restaurant-admin       | JavaScript | Express 5      | MongoDB    | 3020       |
+| event-service          | JavaScript | Express 5      | MongoDB    | (see .env) |
+| order-tracking-api     | JavaScript | Express        | MongoDB    | 3000       |
+| client-admin           | JavaScript | React + Vite   | —          | 5173       |
 
 ---
 
@@ -335,14 +336,14 @@ cp Authentication-service/auth-service/src/AuthService.Api/appsettings.example.j
 
 Edit `appsettings.json` and replace the following fields:
 
-| Field | Description |
-|-------|-------------|
+| Field                                 | Description                                                             |
+| ------------------------------------- | ----------------------------------------------------------------------- |
 | `ConnectionStrings.DefaultConnection` | PostgreSQL connection string (host, database, username, password, port) |
-| `JwtSettings.SecretKey` | Secret key for signing JWT tokens (minimum 32 characters) |
-| `SmtpSettings.Username` | Your Gmail address |
-| `SmtpSettings.Password` | Your Google App Password (not your regular password) |
-| `SmtpSettings.FromEmail` | Same Gmail address |
-| `AppSettings.FrontendUrl` | Frontend URL, default `http://localhost:5173` |
+| `JwtSettings.SecretKey`               | Secret key for signing JWT tokens (minimum 32 characters)               |
+| `SmtpSettings.Username`               | Your Gmail address                                                      |
+| `SmtpSettings.Password`               | Your Google App Password (not your regular password)                    |
+| `SmtpSettings.FromEmail`              | Same Gmail address                                                      |
+| `AppSettings.FrontendUrl`             | Frontend URL, default `http://localhost:5173`                           |
 
 > To generate a Google App Password: [Google Account → Security → App Passwords](https://myaccount.google.com/apppasswords) (requires 2-Step Verification to be enabled).
 
@@ -356,14 +357,14 @@ cp restaurant-admin/.env.example restaurant-admin/.env
 
 Edit `restaurant-admin/.env`:
 
-| Variable | Description |
-|----------|-------------|
-| `PORT` | Server port (default: `3020`) |
-| `URI_MONGODB` | MongoDB connection URI |
-| `JWT_SECRET` | JWT secret key (must match the auth service) |
-| `JWT_ISSUER` | Token issuer (default: `FoodPilot`) |
-| `JWT_AUDIENCE` | Token audience (default: `FoodPilot`) |
-| `JWT_EXPIRES_IN` | Expiration time (default: `1h`) |
+| Variable         | Description                                  |
+| ---------------- | -------------------------------------------- |
+| `PORT`           | Server port (default: `3020`)                |
+| `URI_MONGODB`    | MongoDB connection URI                       |
+| `JWT_SECRET`     | JWT secret key (must match the auth service) |
+| `JWT_ISSUER`     | Token issuer (default: `FoodPilot`)          |
+| `JWT_AUDIENCE`   | Token audience (default: `FoodPilot`)        |
+| `JWT_EXPIRES_IN` | Expiration time (default: `1h`)              |
 
 ---
 
@@ -391,9 +392,9 @@ cp client-admin/.env.example client-admin/.env
 
 Edit `client-admin/.env`:
 
-| Variable | Default value |
-|----------|---------------|
-| `VITE_AUTH_URL` | `http://localhost:5126/api/v1` |
+| Variable         | Default value                              |
+| ---------------- | ------------------------------------------ |
+| `VITE_AUTH_URL`  | `http://localhost:5126/api/v1`             |
 | `VITE_ADMIN_URL` | `http://localhost:3020/restaurantAdmin/v1` |
 
 ---
@@ -475,57 +476,57 @@ Available at: `http://localhost:5173`
 
 ### Authentication-service — `http://localhost:5126/api/v1`
 
-| Method | Route | Description | Auth |
-|--------|-------|-------------|------|
-| POST | `/auth/register` | Register user | No |
-| POST | `/auth/login` | Login | No |
-| POST | `/auth/verify-email` | Verify email | No |
-| POST | `/auth/forgot-password` | Request password recovery | No |
-| POST | `/auth/reset-password` | Reset password | No |
-| GET | `/health` | Service health check | No |
+| Method | Route                   | Description               | Auth |
+| ------ | ----------------------- | ------------------------- | ---- |
+| POST   | `/auth/register`        | Register user             | No   |
+| POST   | `/auth/login`           | Login                     | No   |
+| POST   | `/auth/verify-email`    | Verify email              | No   |
+| POST   | `/auth/forgot-password` | Request password recovery | No   |
+| POST   | `/auth/reset-password`  | Reset password            | No   |
+| GET    | `/health`               | Service health check      | No   |
 
 ### restaurant-admin — `http://localhost:3020/restaurantAdmin/v1`
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/restaurants` | Create restaurant |
-| GET | `/restaurants` | List restaurants |
-| GET | `/restaurants/:id` | Get restaurant |
-| PUT | `/restaurants/:id` | Update restaurant |
-| PATCH | `/restaurants/:id/activate` | Activate restaurant |
-| PATCH | `/restaurants/:id/deactivate` | Deactivate restaurant |
-| POST | `/menus` | Create menu item |
-| GET | `/menus` | List menu items |
-| PUT | `/menus/:id` | Update menu item |
-| PATCH | `/menus/:id/activate` | Activate menu item |
-| PATCH | `/menus/:id/deactivate` | Deactivate menu item |
-| POST | `/tables` | Create table |
-| GET | `/tables` | List tables |
-| PUT | `/tables/:id` | Update table |
-| PATCH | `/tables/:id/activate` | Activate table |
-| PATCH | `/tables/:id/deactivate` | Deactivate table |
+| Method | Route                         | Description           |
+| ------ | ----------------------------- | --------------------- |
+| POST   | `/restaurants`                | Create restaurant     |
+| GET    | `/restaurants`                | List restaurants      |
+| GET    | `/restaurants/:id`            | Get restaurant        |
+| PUT    | `/restaurants/:id`            | Update restaurant     |
+| PATCH  | `/restaurants/:id/activate`   | Activate restaurant   |
+| PATCH  | `/restaurants/:id/deactivate` | Deactivate restaurant |
+| POST   | `/menus`                      | Create menu item      |
+| GET    | `/menus`                      | List menu items       |
+| PUT    | `/menus/:id`                  | Update menu item      |
+| PATCH  | `/menus/:id/activate`         | Activate menu item    |
+| PATCH  | `/menus/:id/deactivate`       | Deactivate menu item  |
+| POST   | `/tables`                     | Create table          |
+| GET    | `/tables`                     | List tables           |
+| PUT    | `/tables/:id`                 | Update table          |
+| PATCH  | `/tables/:id/activate`        | Activate table        |
+| PATCH  | `/tables/:id/deactivate`      | Deactivate table      |
 
 ### event-service — `http://localhost:{PORT}/eventService/v1`
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST/GET/PUT/DELETE | `/events` | Events CRUD |
+| Method              | Route            | Description        |
+| ------------------- | ---------------- | ------------------ |
+| POST/GET/PUT/DELETE | `/events`        | Events CRUD        |
 | POST/GET/PUT/DELETE | `/sales-reports` | Sales reports CRUD |
-| POST/GET/PUT/DELETE | `/usage-stats` | Usage stats CRUD |
+| POST/GET/PUT/DELETE | `/usage-stats`   | Usage stats CRUD   |
 
 ### order-tracking-api — `http://localhost:3000/api`
 
-| Method | Route | Description |
-|--------|-------|-------------|
-| POST | `/orders` | Create order |
-| GET | `/orders` | List orders |
-| GET | `/orders/:id` | Get order |
-| PUT | `/orders/:id/status` | Update order status |
-| POST | `/reservations` | Create reservation |
-| GET | `/reservations` | List reservations |
-| GET | `/reservations/:id` | Get reservation |
-| PUT | `/reservations/:id/cancel` | Cancel reservation |
-| PUT | `/reservations/:id/complete` | Complete reservation |
+| Method | Route                        | Description          |
+| ------ | ---------------------------- | -------------------- |
+| POST   | `/orders`                    | Create order         |
+| GET    | `/orders`                    | List orders          |
+| GET    | `/orders/:id`                | Get order            |
+| PUT    | `/orders/:id/status`         | Update order status  |
+| POST   | `/reservations`              | Create reservation   |
+| GET    | `/reservations`              | List reservations    |
+| GET    | `/reservations/:id`          | Get reservation      |
+| PUT    | `/reservations/:id/cancel`   | Cancel reservation   |
+| PUT    | `/reservations/:id/complete` | Complete reservation |
 
 ---
 

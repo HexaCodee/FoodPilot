@@ -2,32 +2,35 @@
 const mongoose = require('mongoose');
 
 // Definir el esquema para Reservation
-const reservationSchema = new mongoose.Schema({
+const reservationSchema = new mongoose.Schema(
+  {
     tableNumber: {
-        type: String,
-        required: true,
-        trim: true
+      type: String,
+      required: true,
+      trim: true,
     },
     reservedAt: {
-        type: Date,
-        required: true
+      type: Date,
+      required: true,
     },
     status: {
-        type: String,
-        enum: ['ACTIVA', 'CANCELADA', 'COMPLETADA'],
-        default: 'ACTIVA'
+      type: String,
+      enum: ['ACTIVA', 'CANCELADA', 'COMPLETADA'],
+      default: 'ACTIVA',
     },
     userId: {
-        type: String,
-        trim: true,
+      type: String,
+      trim: true,
     },
-    restaurantId: { type: String, trim: true }
-}, { timestamps: true });
+    restaurantId: { type: String, trim: true },
+  },
+  { timestamps: true }
+);
 
 // Asegurar que solo haya una reserva activa por mesa y horario
 reservationSchema.index(
-    { tableNumber: 1, reservedAt: 1, status: 1 },
-    { unique: true, partialFilterExpression: { status: 'ACTIVA' } }
+  { tableNumber: 1, reservedAt: 1, status: 1 },
+  { unique: true, partialFilterExpression: { status: 'ACTIVA' } }
 );
 
 // Exportar el modelo Reservation

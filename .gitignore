@@ -45,3 +45,6 @@ start-dev.ps1
 *.nupkg
 project.lock.json
 project.assets.json
+
+## [Uploads - user generated content, not tracked in git]
+restaurant-admin/uploads/

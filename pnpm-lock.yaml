@@ -17,6 +17,10 @@ importers:
       react-hook-form:
         specifier: ^7.75.0
         version: 7.75.0(react@18.2.0)
+    devDependencies:
+      prettier:
+        specifier: ^3.8.3
+        version: 3.8.3
 
 packages:
 
@@ -25,6 +29,11 @@ packages:
 
   loose-envify@1.4.0:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
+    hasBin: true
+
+  prettier@3.8.3:
+    resolution: {integrity: sha512-7igPTM53cGHMW8xWuVTydi2KO233VFiTNyF5hLJqpilHfmn8C8gPf+PS7dUT64YcXFbiMGZxS9pCSxL/Dxm/Jw==}
+    engines: {node: '>=14'}
     hasBin: true
 
   react-dom@18.2.0:
@@ -52,6 +61,8 @@ snapshots:
   loose-envify@1.4.0:
     dependencies:
       js-tokens: 4.0.0
+
+  prettier@3.8.3: {}
 
   react-dom@18.2.0(react@18.2.0):
     dependencies:

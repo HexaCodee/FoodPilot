@@ -11,21 +11,22 @@ const getDashboardPath = (role) => {
 };
 
 // Raw API calls — defined here to avoid circular imports
-const loginRequest    = (data) => axiosAuth.post('/auth/login', data);
-const registerRequest = (data) => axiosAuth.post('/auth/register', data, {
-  headers: { 'Content-Type': 'multipart/form-data' },
-});
+const loginRequest = (data) => axiosAuth.post('/auth/login', data);
+const registerRequest = (data) =>
+  axiosAuth.post('/auth/register', data, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
 
 export const useAuthStore = create(
   persist(
     (set, get) => ({
-      user:            null,
-      token:           null,
-      refreshToken:    null,
-      expiresAt:       null,
-      loading:         false,
-      error:           null,
-      isLoadingAuth:   true,
+      user: null,
+      token: null,
+      refreshToken: null,
+      expiresAt: null,
+      loading: false,
+      error: null,
+      isLoadingAuth: true,
       isAuthenticated: false,
 
       checkAuth: () => {
@@ -35,7 +36,7 @@ export const useAuthStore = create(
             set({ isLoadingAuth: false, isAuthenticated: false });
             return;
           }
-          const role  = get().user?.role;
+          const role = get().user?.role;
           const valid = Boolean(token) && VALID_ROLES.includes(role);
           set({ isLoadingAuth: false, isAuthenticated: valid });
         } catch {
@@ -47,10 +48,10 @@ export const useAuthStore = create(
 
       logout: () => {
         set({
-          user:            null,
-          token:           null,
-          refreshToken:    null,
-          expiresAt:       null,
+          user: null,
+          token: null,
+          refreshToken: null,
+          expiresAt: null,
           isAuthenticated: false,
         });
       },
@@ -60,12 +61,12 @@ export const useAuthStore = create(
           set({ loading: true, error: null });
           const { data } = await loginRequest({ emailOrUsername, password });
           set({
-            user:            data.userDetails,
-            token:           data.token,
-            refreshToken:    null,
-            expiresAt:       data.expiresAt,
+            user: data.userDetails,
+            token: data.token,
+            refreshToken: null,
+            expiresAt: data.expiresAt,
             isAuthenticated: true,
-            loading:         false,
+            loading: false,
           });
           return { success: true, dashboardPath: getDashboardPath(data.userDetails?.role) };
         } catch (err) {
@@ -96,15 +97,15 @@ export const useAuthStore = create(
 
 // ── Register token handlers with axios (no circular import) ───────────────────
 setAuthHandlers({
-  getToken:        () => useAuthStore.getState().token,
+  getToken: () => useAuthStore.getState().token,
   getRefreshToken: () => useAuthStore.getState().refreshToken,
-  onLogout:        () => useAuthStore.getState().logout(),
-  onTokenRefresh:  ({ accessToken, refreshToken, expiresIn, userDetails }) => {
+  onLogout: () => useAuthStore.getState().logout(),
+  onTokenRefresh: ({ accessToken, refreshToken, expiresIn, userDetails }) => {
     useAuthStore.setState({
-      token:           accessToken,
-      refreshToken:    refreshToken,
-      expiresAt:       expiresIn,
-      user:            userDetails ?? useAuthStore.getState().user,
+      token: accessToken,
+      refreshToken: refreshToken,
+      expiresAt: expiresIn,
+      user: userDetails ?? useAuthStore.getState().user,
       isAuthenticated: true,
     });
   },

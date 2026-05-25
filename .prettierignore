@@ -1,0 +1,20 @@
+# Dependencies
+**/node_modules/
+
+# Lock files
+**/pnpm-lock.yaml
+**/package-lock.json
+**/yarn.lock
+
+# Build output
+**/dist/
+**/build/
+
+# .NET (not handled by Prettier)
+Authentication-service/
+
+# Environment
+**/.env
+
+# Uploaded files
+restaurant-admin/uploads/
