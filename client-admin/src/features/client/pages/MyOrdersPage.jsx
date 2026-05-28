@@ -2,13 +2,15 @@ import { useState, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useAuthStore } from '../../auth/store/authStore.js';
 import { getOrders, createOrder, cancelOrder } from '../../../shared/apis/orders.js';
+import { getRestaurants } from '../../../shared/apis/restaurants.js';
+import { getMenus } from '../../../shared/apis/menus.js';
 import {
   Modal,
   ModalActions,
   BtnPrimary,
   BtnSecondary,
 } from '../../../shared/components/ui/Modal.jsx';
-import { BagIcon } from '../../../shared/components/ui/Icons.jsx';
+import { BagIcon, PlusIcon } from '../../../shared/components/ui/Icons.jsx';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const Skeleton = ({ className = '' }) => (
@@ -19,6 +21,9 @@ const fmtDate = (d) =>
   d
     ? new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })
     : '—';
+
+const fmtMoney = (n) =>
+  typeof n === 'number' ? `$${n.toLocaleString('es-ES', { minimumFractionDigits: 2 })}` : '—';
 
 const STATUS_LABEL = {
   PENDIENTE: 'Pendiente',
@@ -33,33 +38,115 @@ const STATUS_STYLE = {
   CANCELADO: 'bg-red-900/30    text-red-400',
 };
 
-const fmtMoney = (n) =>
-  typeof n === 'number' ? `$${n.toLocaleString('es-ES', { minimumFractionDigits: 2 })}` : '—';
-
 const TABS = ['Todos', 'PENDIENTE', 'ENVIADO', 'ENTREGADO', 'CANCELADO'];
 
+const EMPTY_ITEM = { productId: '', name: '', price: 0, quantity: 1 };
+
+const field =
+  'w-full bg-fp-bg border border-fp-border rounded-lg px-3 py-2 text-fp-text text-sm placeholder-fp-subtle focus:outline-none focus:border-fp-gold/50 transition-colors';
+
 // ── Create order modal ────────────────────────────────────────────────────────
-const CreateOrderModal = ({ isOpen, onClose, onCreated, defaultName, userId }) => {
-  const [form, setForm] = useState({ customerName: '', product: '', quantity: 1, price: '' });
+const CreateOrderModal = ({ isOpen, onClose, onCreated, user }) => {
+  const [restaurants, setRestaurants] = useState([]);
+  const [restaurantId, setRestaurantId] = useState('');
+  const [menuItems, setMenuItems] = useState([]);
+  const [loadingRest, setLoadingRest] = useState(false);
+  const [loadingMenu, setLoadingMenu] = useState(false);
+
+  const [items, setItems] = useState([{ ...EMPTY_ITEM }]);
+  const [phone, setPhone] = useState('');
+  const [isDelivery, setIsDelivery] = useState(false);
+  const [address, setAddress] = useState('');
   const [saving, setSaving] = useState(false);
 
+  // Load restaurants once on open
   useEffect(() => {
-    if (isOpen) setForm({ customerName: defaultName ?? '', product: '', quantity: 1, price: '' });
-  }, [isOpen, defaultName]);
+    if (!isOpen) return;
+    setRestaurantId('');
+    setMenuItems([]);
+    setItems([{ ...EMPTY_ITEM }]);
+    setPhone('');
+    setIsDelivery(false);
+    setAddress('');
 
-  const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+    setLoadingRest(true);
+    getRestaurants({ isActive: true, limit: 100 })
+      .then((r) => setRestaurants(r.data?.data ?? []))
+      .catch(() => toast.error('No se pudieron cargar los restaurantes'))
+      .finally(() => setLoadingRest(false));
+  }, [isOpen]);
+
+  // Load menu when restaurant changes
+  useEffect(() => {
+    if (!restaurantId) {
+      setMenuItems([]);
+      setItems([{ ...EMPTY_ITEM }]);
+      return;
+    }
+    setLoadingMenu(true);
+    setItems([{ ...EMPTY_ITEM }]);
+    getMenus({ restaurant: restaurantId, isAvailable: true, limit: 200 })
+      .then((r) => setMenuItems(r.data?.data ?? []))
+      .catch(() => toast.error('No se pudo cargar el menú del restaurante'))
+      .finally(() => setLoadingMenu(false));
+  }, [restaurantId]);
+
+  const total = items.reduce((sum, it) => sum + it.price * Math.max(1, Number(it.quantity)), 0);
+
+  const updateItem = (idx, field, value) => {
+    setItems((prev) => {
+      const next = [...prev];
+      if (field === 'productId') {
+        const found = menuItems.find((m) => m._id === value);
+        next[idx] = {
+          ...next[idx],
+          productId: value,
+          name: found?.name ?? '',
+          price: found?.price ?? 0,
+        };
+      } else {
+        next[idx] = { ...next[idx], [field]: value };
+      }
+      return next;
+    });
+  };
+
+  const addItem = () => setItems((prev) => [...prev, { ...EMPTY_ITEM }]);
+  const removeItem = (idx) => setItems((prev) => prev.filter((_, i) => i !== idx));
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!restaurantId) return toast.error('Selecciona un restaurante');
+    if (items.some((it) => !it.productId)) return toast.error('Selecciona un producto en cada fila');
+    if (!phone.trim()) return toast.error('El número de teléfono es requerido');
+    if ((phone.replace(/\D/g, '').length) < 7)
+      return toast.error('Ingresa un número de teléfono válido (mínimo 7 dígitos)');
+    if (isDelivery && !address.trim())
+      return toast.error('La dirección es requerida para pedidos a domicilio');
+
     setSaving(true);
     try {
+      const resolvedItems = items.map((it) => ({
+        productId: it.productId,
+        name: it.name,
+        price: it.price,
+        quantity: Number(it.quantity),
+      }));
+
       await createOrder({
-        customerName: form.customerName.trim(),
-        product: form.product.trim(),
-        quantity: Number(form.quantity),
-        price: form.price !== '' ? Number(form.price) : undefined,
-        userId: userId,
+        customerName: user?.username ?? 'Cliente',
+        restaurantId,
+        items: resolvedItems,
+        // Campos de compatibilidad con el schema existente
+        product: resolvedItems.map((it) => it.name).join(', '),
+        quantity: resolvedItems.reduce((s, it) => s + it.quantity, 0),
+        price: total,
+        phone: phone.trim(),
+        isDelivery,
+        address: isDelivery ? address.trim() : undefined,
+        userId: user?.id,
       });
+
       toast.success('Pedido creado');
       onCreated();
       onClose();
@@ -75,56 +162,179 @@ const CreateOrderModal = ({ isOpen, onClose, onCreated, defaultName, userId }) =
     }
   };
 
-  const field =
-    'w-full bg-fp-bg border border-fp-border rounded-lg px-3 py-2 text-fp-text text-sm placeholder-fp-subtle focus:outline-none focus:border-fp-gold/50 transition-colors';
-  const label = 'block text-fp-subtle text-xs mb-1';
+  const selectedRestName = restaurants.find((r) => r._id === restaurantId)?.name ?? '';
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title='Nuevo pedido'>
-      <form onSubmit={handleSubmit} className='space-y-4'>
+    <Modal isOpen={isOpen} onClose={onClose} title='Nuevo pedido' maxWidth='max-w-2xl'>
+      <form onSubmit={handleSubmit} className='space-y-5'>
+        {/* Cliente (solo lectura) */}
         <div>
-          <label className={label}>Nombre del cliente *</label>
+          <label className='block text-fp-subtle text-xs mb-1'>Cliente</label>
+          <input
+            className={`${field} opacity-60 cursor-not-allowed`}
+            value={user?.username ?? '—'}
+            readOnly
+          />
+        </div>
+
+        {/* Restaurante */}
+        <div>
+          <label className='block text-fp-subtle text-xs mb-1'>Restaurante *</label>
+          <select
+            className={field}
+            value={restaurantId}
+            onChange={(e) => setRestaurantId(e.target.value)}
+            required
+            disabled={loadingRest}
+          >
+            <option value=''>
+              {loadingRest ? 'Cargando restaurantes…' : '— Selecciona un restaurante —'}
+            </option>
+            {restaurants.map((r) => (
+              <option key={r._id} value={r._id}>
+                {r.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Productos */}
+        <div>
+          <label className='block text-fp-subtle text-xs mb-2'>Productos *</label>
+
+          {loadingMenu ? (
+            <div className='space-y-2'>
+              <Skeleton className='h-10 w-full' />
+              <Skeleton className='h-10 w-full' />
+            </div>
+          ) : (
+            <div className='space-y-2'>
+              {items.map((it, idx) => (
+                <div key={idx} className='flex items-center gap-2'>
+                  {/* Product selector */}
+                  <select
+                    className={`${field} flex-1`}
+                    value={it.productId}
+                    onChange={(e) => updateItem(idx, 'productId', e.target.value)}
+                    required
+                    disabled={!restaurantId}
+                  >
+                    <option value=''>
+                      {!restaurantId
+                        ? 'Primero selecciona un restaurante'
+                        : menuItems.length === 0
+                          ? 'Sin productos disponibles'
+                          : '— Producto —'}
+                    </option>
+                    {menuItems.map((m) => (
+                      <option key={m._id} value={m._id}>
+                        {m.name} — {fmtMoney(m.price)}
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* Quantity */}
+                  <input
+                    type='number'
+                    min='1'
+                    className='w-20 bg-fp-bg border border-fp-border rounded-lg px-3 py-2 text-fp-text text-sm text-center focus:outline-none focus:border-fp-gold/50 transition-colors'
+                    value={it.quantity}
+                    onChange={(e) => updateItem(idx, 'quantity', Math.max(1, Number(e.target.value)))}
+                    required
+                  />
+
+                  {/* Subtotal */}
+                  <span className='w-24 text-right text-fp-muted text-sm flex-shrink-0'>
+                    {fmtMoney(it.price * Math.max(1, Number(it.quantity)))}
+                  </span>
+
+                  {/* Remove row */}
+                  {items.length > 1 && (
+                    <button
+                      type='button'
+                      onClick={() => removeItem(idx)}
+                      className='text-fp-subtle hover:text-red-400 text-lg leading-none flex-shrink-0 transition-colors'
+                      title='Quitar producto'
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Add product row */}
+          {restaurantId && menuItems.length > 0 && (
+            <button
+              type='button'
+              onClick={addItem}
+              className='mt-2 flex items-center gap-1.5 text-xs text-fp-gold hover:text-fp-gold-hover transition-colors'
+            >
+              <PlusIcon className='w-3.5 h-3.5' />
+              Agregar otro producto
+            </button>
+          )}
+
+          {/* Total */}
+          {items.some((it) => it.productId) && (
+            <div className='flex justify-end mt-3 pt-3 border-t border-fp-border-subtle'>
+              <span className='text-fp-muted text-sm mr-3'>Total</span>
+              <span className='text-fp-text font-semibold'>{fmtMoney(total)}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Phone */}
+        <div>
+          <label className='block text-fp-subtle text-xs mb-1'>Teléfono de contacto *</label>
           <input
             className={field}
-            value={form.customerName}
-            onChange={(e) => set('customerName', e.target.value)}
-            placeholder='Tu nombre'
+            type='tel'
+            value={phone}
+            onChange={(e) => setPhone(e.target.value.replace(/[^\d+\-\s().]/g, ''))}
+            placeholder='Ej. +504 9999-9999'
+            maxLength={20}
             required
           />
         </div>
-        <div>
-          <label className={label}>Producto *</label>
-          <input
-            className={field}
-            value={form.product}
-            onChange={(e) => set('product', e.target.value)}
-            placeholder='Ej. Pizza Margherita'
-            required
-          />
+
+        {/* Pickup vs Delivery */}
+        <div className='space-y-3'>
+          <label className='flex items-center gap-3 cursor-pointer group'>
+            <div
+              onClick={() => setIsDelivery((v) => !v)}
+              className={`w-11 h-6 rounded-full relative transition-colors duration-200 flex-shrink-0 ${
+                isDelivery ? 'bg-fp-gold' : 'bg-fp-elevated border border-fp-border'
+              }`}
+            >
+              <span
+                className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${
+                  isDelivery ? 'translate-x-5' : 'translate-x-0.5'
+                }`}
+              />
+            </div>
+            <span className='text-fp-text text-sm select-none'>Pedido a domicilio</span>
+            {!isDelivery && (
+              <span className='text-fp-subtle text-xs'>(recoger en restaurante)</span>
+            )}
+          </label>
+
+          {/* Address — only shown for delivery */}
+          {isDelivery && (
+            <div>
+              <label className='block text-fp-subtle text-xs mb-1'>Dirección de entrega *</label>
+              <input
+                className={field}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder='Calle, colonia, referencias…'
+                required={isDelivery}
+              />
+            </div>
+          )}
         </div>
-        <div>
-          <label className={label}>Cantidad *</label>
-          <input
-            type='number'
-            min='1'
-            className={field}
-            value={form.quantity}
-            onChange={(e) => set('quantity', e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label className={label}>Precio (opcional)</label>
-          <input
-            type='number'
-            min='0'
-            step='0.01'
-            className={field}
-            value={form.price}
-            onChange={(e) => set('price', e.target.value)}
-            placeholder='Ej. 15.99'
-          />
-        </div>
+
         <ModalActions>
           <BtnSecondary onClick={onClose} disabled={saving}>
             Cancelar
@@ -245,7 +455,7 @@ export const MyOrdersPage = () => {
             <table className='w-full text-sm'>
               <thead>
                 <tr className='border-b border-fp-border bg-fp-bg'>
-                  {['Cliente', 'Producto', 'Cant.', 'Precio', 'Estado', 'Fecha', ''].map((h) => (
+                  {['Productos', 'Total', 'Tipo', 'Estado', 'Fecha', ''].map((h) => (
                     <th
                       key={h}
                       className='px-4 py-3 text-left text-xs text-fp-subtle uppercase tracking-wide font-medium'
@@ -258,10 +468,26 @@ export const MyOrdersPage = () => {
               <tbody className='divide-y divide-fp-border-subtle'>
                 {filtered.map((o) => (
                   <tr key={o._id} className='hover:bg-fp-elevated/50 transition-colors'>
-                    <td className='px-4 py-3 text-fp-text font-medium'>{o.customerName}</td>
-                    <td className='px-4 py-3 text-fp-muted'>{o.product}</td>
-                    <td className='px-4 py-3 text-fp-muted text-center'>{o.quantity}</td>
-                    <td className='px-4 py-3 text-fp-text font-medium'>{fmtMoney(o.price)}</td>
+                    <td className='px-4 py-3 text-fp-muted max-w-xs'>
+                      <p className='truncate'>{o.product ?? '—'}</p>
+                      {o.quantity > 1 && (
+                        <p className='text-fp-subtle text-xs'>{o.quantity} unidades</p>
+                      )}
+                    </td>
+                    <td className='px-4 py-3 text-fp-text font-medium whitespace-nowrap'>
+                      {fmtMoney(o.price)}
+                    </td>
+                    <td className='px-4 py-3 whitespace-nowrap'>
+                      <span
+                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                          o.isDelivery
+                            ? 'bg-blue-400/10 text-blue-400'
+                            : 'bg-fp-elevated text-fp-muted'
+                        }`}
+                      >
+                        {o.isDelivery ? 'Domicilio' : 'Recoger'}
+                      </span>
+                    </td>
                     <td className='px-4 py-3'>
                       <span
                         className={`text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_STYLE[o.status] ?? STATUS_STYLE.PENDIENTE}`}
@@ -269,7 +495,9 @@ export const MyOrdersPage = () => {
                         {STATUS_LABEL[o.status] ?? o.status}
                       </span>
                     </td>
-                    <td className='px-4 py-3 text-fp-subtle text-xs'>{fmtDate(o.createdAt)}</td>
+                    <td className='px-4 py-3 text-fp-subtle text-xs whitespace-nowrap'>
+                      {fmtDate(o.createdAt)}
+                    </td>
                     <td className='px-4 py-3'>
                       {o.status === 'PENDIENTE' && (
                         <button
@@ -293,8 +521,7 @@ export const MyOrdersPage = () => {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onCreated={load}
-        defaultName={user?.username ?? ''}
-        userId={user?.id}
+        user={user}
       />
     </div>
   );

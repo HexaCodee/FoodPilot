@@ -65,6 +65,9 @@ const validate = require('../../middlewares/validation.middleware');
  */
 router.post('/', createReservationValidator, validate, controller.createReservation);
 
+// Cancelar todas las reservas ACTIVAS de una mesa (invocado por restaurant-admin al desactivar)
+router.put('/cancel-by-table', controller.cancelReservationsByTable);
+
 /**
  * @swagger
  * /api/reservations:

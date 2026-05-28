@@ -39,6 +39,27 @@ const tableSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    // Días de la semana en que la mesa acepta reservaciones (0=Dom, 1=Lun … 6=Sáb)
+    availableDays: {
+      type: [Number],
+      default: [0, 1, 2, 3, 4, 5, 6],
+      validate: {
+        validator: (days) => days.every((d) => d >= 0 && d <= 6),
+        message: 'Cada día debe ser un número entre 0 y 6',
+      },
+    },
+    // Hora de inicio de reservaciones (formato HH:MM)
+    availableFrom: {
+      type: String,
+      default: '08:00',
+      match: [/^\d{2}:\d{2}$/, 'Formato de hora inválido, use HH:MM'],
+    },
+    // Hora de cierre de reservaciones (formato HH:MM)
+    availableTo: {
+      type: String,
+      default: '22:00',
+      match: [/^\d{2}:\d{2}$/, 'Formato de hora inválido, use HH:MM'],
+    },
   },
   {
     timestamps: true,
@@ -52,12 +73,18 @@ tableSchema.pre('save', async function () {
 });
 
 tableSchema.pre('findOneAndUpdate', async function () {
+  // Mongoose auto-wraps plain objects in $set, so we read from $set
   const update = this.getUpdate();
-  if (update.status) {
-    update.isAvailable = update.status === 'DISPONIBLE';
-  }
-  if (typeof update.isAvailable === 'boolean' && !update.status) {
-    update.status = update.isAvailable ? 'DISPONIBLE' : 'FUERA_DE_SERVICIO';
+  const data = update.$set ?? update;
+
+  if (data.status) {
+    data.isAvailable = data.status === 'DISPONIBLE';
+    if (update.$set) update.$set.isAvailable = data.isAvailable;
+    else update.isAvailable = data.isAvailable;
+  } else if (typeof data.isAvailable === 'boolean') {
+    data.status = data.isAvailable ? 'DISPONIBLE' : 'FUERA_DE_SERVICIO';
+    if (update.$set) update.$set.status = data.status;
+    else update.status = data.status;
   }
 });
 

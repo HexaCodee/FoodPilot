@@ -92,6 +92,7 @@ const restaurantSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    adminUserIds: { type: [String], default: [] },
   },
   {
     timestamps: true,

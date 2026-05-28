@@ -2,9 +2,11 @@ import { axiosOrders } from './api.js';
 
 const BASE = '/orders';
 
-export const getOrders = ({ page = 1, limit = 50, userId } = {}) => {
+export const getOrders = ({ page = 1, limit = 50, userId, restaurantId, status } = {}) => {
   const params = { page, limit };
   if (userId) params.userId = userId;
+  if (restaurantId) params.restaurantId = restaurantId;
+  if (status) params.status = status;
   return axiosOrders.get(BASE, { params });
 };
 

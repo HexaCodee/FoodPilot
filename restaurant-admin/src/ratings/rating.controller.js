@@ -2,8 +2,8 @@ import { createOrUpdateRating, fetchRatings, deleteRating } from './rating.servi
 
 export const createRatingController = async (req, res) => {
   try {
-    const { restaurantId, userId, rating, comment } = req.body;
-    const result = await createOrUpdateRating({ restaurantId, userId, rating, comment });
+    const { restaurantId, userId, userName, rating, comment } = req.body;
+    const result = await createOrUpdateRating({ restaurantId, userId, userName, rating, comment });
     res.status(201).json({ success: true, message: 'Calificación guardada', data: result });
   } catch (err) {
     res

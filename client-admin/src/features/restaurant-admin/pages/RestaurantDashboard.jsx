@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useRestaurantStore } from '../store/restaurantStore.js';
+import { useAuthStore } from '../../auth/store/authStore.js';
 import { getRestaurants } from '../../../shared/apis/restaurants.js';
 import { getTables } from '../../../shared/apis/tables.js';
 import { getMenus } from '../../../shared/apis/menus.js';
@@ -60,21 +61,52 @@ const OrderRow = ({ order }) => (
 
 // ── Restaurant picker (shown when no restaurant selected) ─────────────────────
 const RestaurantPicker = ({ onSelect }) => {
+  const user = useAuthStore((s) => s.user);
+  const setAssignedCount = useRestaurantStore((s) => s.setAssignedCount);
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getRestaurants({ isActive: 'all', limit: 100 })
-      .then((r) => setRestaurants(r.data?.data ?? []))
-      .catch(() => setRestaurants([]))
-      .finally(() => setLoading(false));
-  }, []);
+    if (!user?.id) return;
+    getRestaurants({ adminUserId: user.id, isActive: 'all', limit: 100 })
+      .then((r) => {
+        const list = r.data?.data ?? [];
+        setAssignedCount(list.length);
+        // Auto-select if only one restaurant assigned
+        if (list.length === 1) {
+          onSelect(list[0]);
+        } else {
+          setRestaurants(list);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        setAssignedCount(0);
+        setRestaurants([]);
+        setLoading(false);
+      });
+  }, [user?.id, onSelect, setAssignedCount]);
+
+  if (loading) {
+    return (
+      <div className='space-y-6 animate-fadeUp'>
+        <div>
+          <h1 className='font-display text-2xl text-fp-text'>Mi Restaurante</h1>
+        </div>
+        <div className='space-y-2 max-w-2xl'>
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className='h-14 w-full' />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='space-y-6 animate-fadeUp'>
       <div>
         <h1 className='font-display text-2xl text-fp-text'>Mi Restaurante</h1>
-        <p className='text-fp-muted text-sm mt-0.5'>Selecciona tu restaurante para continuar</p>
+        <p className='text-fp-muted text-sm mt-0.5'>Selecciona el restaurante que deseas gestionar</p>
       </div>
 
       <div className='bg-fp-surface border border-fp-border rounded-xl p-6 max-w-2xl'>
@@ -88,16 +120,15 @@ const RestaurantPicker = ({ onSelect }) => {
           </div>
         </div>
 
-        {loading ? (
-          <div className='space-y-2'>
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className='h-14 w-full' />
-            ))}
+        {restaurants.length === 0 ? (
+          <div className='text-center py-8'>
+            <BuildingIcon className='w-10 h-10 text-fp-subtle mx-auto mb-3' />
+            <p className='text-fp-muted text-sm font-medium'>Sin restaurantes asignados</p>
+            <p className='text-fp-subtle text-xs mt-1 max-w-xs mx-auto'>
+              El administrador de la plataforma aún no te ha asignado ningún restaurante.
+              Contacta con él para que te asigne uno.
+            </p>
           </div>
-        ) : restaurants.length === 0 ? (
-          <p className='text-fp-muted text-sm text-center py-6'>
-            No hay restaurantes registrados aún.
-          </p>
         ) : (
           <div className='space-y-2'>
             {restaurants.map((r) => (
@@ -130,7 +161,7 @@ const RestaurantPicker = ({ onSelect }) => {
 
 // ── Main dashboard ────────────────────────────────────────────────────────────
 export const RestaurantDashboard = () => {
-  const { selectedRestaurant, setSelectedRestaurant, clearRestaurant } = useRestaurantStore();
+  const { selectedRestaurant, setSelectedRestaurant, clearRestaurant, assignedCount } = useRestaurantStore();
 
   const [stats, setStats] = useState({
     tables: null,
@@ -184,12 +215,14 @@ export const RestaurantDashboard = () => {
             {selectedRestaurant.category} · {selectedRestaurant.address}
           </p>
         </div>
-        <button
-          onClick={clearRestaurant}
-          className='text-xs text-fp-subtle hover:text-fp-gold transition-colors border border-fp-border hover:border-fp-gold/30 px-3 py-1.5 rounded-lg'
-        >
-          Cambiar restaurante
-        </button>
+        {assignedCount > 1 && (
+          <button
+            onClick={clearRestaurant}
+            className='text-xs text-fp-subtle hover:text-fp-gold transition-colors border border-fp-border hover:border-fp-gold/30 px-3 py-1.5 rounded-lg'
+          >
+            Cambiar restaurante
+          </button>
+        )}
       </div>
 
       {/* Stats */}

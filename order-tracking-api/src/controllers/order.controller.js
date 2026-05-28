@@ -12,12 +12,15 @@ exports.createOrder = async (req, res, next) => {
   }
 };
 
-// Obtener todos los pedidos (filtrar por userId si se proporciona)
+// Obtener todos los pedidos con filtros opcionales
 exports.getOrders = async (req, res, next) => {
   try {
     const filter = {};
     if (req.query.userId) filter.userId = req.query.userId;
-    const orders = await Order.find(filter).sort({ createdAt: -1 });
+    if (req.query.restaurantId) filter.restaurantId = req.query.restaurantId;
+    if (req.query.status) filter.status = req.query.status;
+    const limit = Math.min(parseInt(req.query.limit) || 50, 2000);
+    const orders = await Order.find(filter).sort({ createdAt: -1 }).limit(limit);
     res.json(orders);
   } catch (error) {
     next(error);

@@ -23,6 +23,8 @@ const reservationSchema = new mongoose.Schema(
       trim: true,
     },
     restaurantId: { type: String, trim: true },
+    tableId: { type: String, trim: true },
+    cancelledByAdmin: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

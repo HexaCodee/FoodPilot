@@ -12,6 +12,11 @@ const ratingSchema = new Schema(
       required: [true, 'El ID del usuario es obligatorio'],
       trim: true,
     },
+    userName: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     rating: {
       type: Number,
       required: [true, 'La calificación es obligatoria'],

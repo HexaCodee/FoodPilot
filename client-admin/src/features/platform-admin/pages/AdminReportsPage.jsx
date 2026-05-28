@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import toast from 'react-hot-toast';
 import {
   getSalesReports,
@@ -6,6 +8,7 @@ import {
   getUsageStats,
   deleteUsageStats,
 } from '../../../shared/apis/events.js';
+import { getRestaurants } from '../../../shared/apis/restaurants.js';
 import { BarChartIcon, TrendUpIcon, ClipboardIcon } from '../../../shared/components/ui/Icons.jsx';
 import { Modal, ModalActions, BtnSecondary } from '../../../shared/components/ui/Modal.jsx';
 
@@ -28,20 +31,224 @@ const fmtDate = (d) => {
 
 const PERIOD_LABEL = { DÍA: 'Día', SEMANA: 'Semana', MES: 'Mes', AÑO: 'Año' };
 
-// ── CSV export ────────────────────────────────────────────────────────────────
-const exportCSV = (rows, headers, filename) => {
-  const escape = (v) => {
-    const s = String(v ?? '').replace(/"/g, '""');
-    return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s}"` : s;
-  };
-  const lines = [headers.map(escape).join(','), ...rows.map((r) => r.map(escape).join(','))];
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+// ── PDF helpers ───────────────────────────────────────────────────────────────
+const C = {
+  gold: [201, 168, 76],
+  dark: [18, 18, 20],
+  gray: [110, 110, 120],
+  light: [247, 247, 250],
+  blue: [59, 130, 246],
+  white: [255, 255, 255],
+};
+const PW = 210;
+
+const _header = (doc, subtitle, date) => {
+  doc.setFillColor(...C.gold);
+  doc.rect(0, 0, PW, 25, 'F');
+  doc.setTextColor(...C.dark);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(17);
+  doc.text('FoodPilot', 14, 11);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(40, 28, 0);
+  doc.text(subtitle, 14, 19);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(10);
+  doc.setTextColor(...C.dark);
+  doc.text('Administración de Plataforma', PW - 14, 10, { align: 'right' });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(40, 28, 0);
+  doc.text(`Generado: ${fmtDate(date)}`, PW - 14, 18, { align: 'right' });
+};
+
+const _boxes = (doc, boxes, y) => {
+  const gap = 5;
+  const bw = (PW - 28 - gap * (boxes.length - 1)) / boxes.length;
+  boxes.forEach((b, i) => {
+    const x = 14 + i * (bw + gap);
+    doc.setFillColor(...C.light);
+    doc.rect(x, y, bw, 24, 'F');
+    doc.setFillColor(...C.gold);
+    doc.rect(x, y, bw, 3, 'F');
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...C.gray);
+    doc.text(b.label.toUpperCase(), x + bw / 2, y + 12, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(...C.dark);
+    doc.text(String(b.value), x + bw / 2, y + 21, { align: 'center' });
+  });
+  return y + 32;
+};
+
+const _bars = (doc, data, y, title, accentColor = C.gold) => {
+  if (!data?.length) return y;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(...C.dark);
+  doc.text(title, 14, y);
+  y += 7;
+  const lw = 50, vw = 30;
+  const bw = PW - 28 - lw - vw;
+  const bh = 5.5, gap = 3.5;
+  const mx = Math.max(...data.map((d) => d.value), 1);
+  data.slice(0, 8).forEach((d, i) => {
+    const by = y + i * (bh + gap);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...C.gray);
+    doc.text(String(d.label).slice(0, 20), 14, by + bh - 0.5);
+    doc.setFillColor(225, 225, 230);
+    doc.rect(14 + lw, by, bw, bh, 'F');
+    const fw = Math.max((bw * d.value) / mx, d.value > 0 ? 1 : 0);
+    if (fw > 0) {
+      doc.setFillColor(...accentColor);
+      doc.rect(14 + lw, by, fw, bh, 'F');
+    }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(...C.dark);
+    doc.text(String(d.display), 14 + lw + bw + 3, by + bh - 0.5);
+  });
+  return y + data.slice(0, 8).length * (bh + gap) + 10;
+};
+
+const _footer = (doc) => {
+  const n = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= n; i++) {
+    doc.setPage(i);
+    const ph = doc.internal.pageSize.height;
+    doc.setDrawColor(...C.gray);
+    doc.setLineWidth(0.2);
+    doc.line(14, ph - 14, PW - 14, ph - 14);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(...C.gray);
+    doc.text(
+      `FoodPilot · Administración · Pág. ${i} de ${n}`,
+      PW / 2,
+      ph - 8,
+      { align: 'center' }
+    );
+  }
+};
+
+const generateAdminSalesPDF = (reports, resMap = {}) => {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const now = new Date();
+  _header(doc, 'Reporte Global de Ventas', now);
+
+  const totalSales = reports.reduce((s, r) => s + (r.totalSales ?? 0), 0);
+  const totalOrders = reports.reduce((s, r) => s + (r.totalOrders ?? 0), 0);
+  const avgTicket =
+    reports.length > 0
+      ? reports.reduce((s, r) => s + (r.averageTicket ?? 0), 0) / reports.length
+      : 0;
+
+  let y = _boxes(
+    doc,
+    [
+      { label: 'Ventas totales', value: fmtMoney(totalSales) },
+      { label: 'Pedidos totales', value: totalOrders },
+      { label: 'Ticket promedio', value: fmtMoney(avgTicket) },
+    ],
+    33
+  );
+
+  // Group by restaurantId for bar chart
+  const byRestaurant = {};
+  reports.forEach((r) => {
+    const name = resMap[r.restaurantId] ?? r.restaurantId ?? 'Sin nombre';
+    byRestaurant[name] = (byRestaurant[name] ?? 0) + (r.totalSales ?? 0);
+  });
+  const barData = Object.entries(byRestaurant)
+    .map(([label, value]) => ({ label, value, display: fmtMoney(value) }))
+    .sort((a, b) => b.value - a.value);
+
+  if (barData.length > 0) {
+    y = _bars(doc, barData, y, 'Ventas por restaurante');
+  }
+
+  autoTable(doc, {
+    startY: y,
+    head: [['Restaurante', 'Período', 'Ventas', 'Pedidos', 'Ticket prom.', 'Generado']],
+    body: reports.map((r) => [
+      resMap[r.restaurantId] ?? r.restaurantId?.toString?.() ?? '—',
+      `${PERIOD_LABEL[r.period?.type] ?? r.period?.type ?? '—'}${r.period?.year ? ` ${r.period.year}` : ''}`,
+      fmtMoney(r.totalSales),
+      r.totalOrders ?? 0,
+      fmtMoney(r.averageTicket),
+      fmtDate(r.generatedAt),
+    ]),
+    headStyles: { fillColor: C.gold, textColor: C.dark, fontStyle: 'bold', fontSize: 8 },
+    bodyStyles: { fontSize: 8, textColor: C.dark },
+    alternateRowStyles: { fillColor: C.light },
+    margin: { left: 14, right: 14 },
+    theme: 'plain',
+    styles: { cellPadding: 3 },
+  });
+
+  _footer(doc);
+  doc.save(`admin_reportes_ventas_${now.toISOString().slice(0, 10)}.pdf`);
+};
+
+const generateAdminUsagePDF = (stats, resMap = {}) => {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const now = new Date();
+  _header(doc, 'Estadísticas Globales de Uso', now);
+
+  const totalRes = stats.reduce((s, r) => s + (r.reservationsCount ?? 0), 0);
+  const totalNew = stats.reduce((s, r) => s + (r.newUsers ?? 0), 0);
+  const totalRepeat = stats.reduce((s, r) => s + (r.repeatUsers ?? 0), 0);
+
+  let y = _boxes(
+    doc,
+    [
+      { label: 'Reservas totales', value: totalRes },
+      { label: 'Usuarios nuevos', value: totalNew },
+      { label: 'Usuarios recurrentes', value: totalRepeat },
+    ],
+    33
+  );
+
+  const byRestaurant = {};
+  stats.forEach((s) => {
+    const name = resMap[s.restaurantId] ?? s.restaurantId ?? 'Sin nombre';
+    byRestaurant[name] = (byRestaurant[name] ?? 0) + (s.reservationsCount ?? 0);
+  });
+  const barData = Object.entries(byRestaurant)
+    .map(([label, value]) => ({ label, value, display: String(value) }))
+    .sort((a, b) => b.value - a.value);
+
+  if (barData.length > 0) {
+    y = _bars(doc, barData, y, 'Reservas por restaurante', C.blue);
+  }
+
+  autoTable(doc, {
+    startY: y,
+    head: [['Restaurante', 'Período', 'Reservas', 'Hora pico', 'Nuevos', 'Recurrentes', 'Generado']],
+    body: stats.map((s) => [
+      resMap[s.restaurantId] ?? s.restaurantId?.toString?.() ?? '—',
+      PERIOD_LABEL[s.period?.type] ?? s.period?.type ?? '—',
+      s.reservationsCount ?? 0,
+      s.mostBusyHour ?? '—',
+      s.newUsers ?? 0,
+      s.repeatUsers ?? 0,
+      fmtDate(s.generatedAt),
+    ]),
+    headStyles: { fillColor: C.blue, textColor: C.white, fontStyle: 'bold', fontSize: 8 },
+    bodyStyles: { fontSize: 8, textColor: C.dark },
+    alternateRowStyles: { fillColor: C.light },
+    margin: { left: 14, right: 14 },
+    theme: 'plain',
+    styles: { cellPadding: 3 },
+  });
+
+  _footer(doc);
+  doc.save(`admin_estadisticas_uso_${now.toISOString().slice(0, 10)}.pdf`);
 };
 
 // ── CSS bar chart ─────────────────────────────────────────────────────────────
@@ -124,7 +331,7 @@ const DeleteModal = ({ item, label, onClose, onDeleted, deleteFn }) => {
 };
 
 // ── Sales Reports tab ─────────────────────────────────────────────────────────
-const SalesReportsTab = () => {
+const SalesReportsTab = ({ resMap = {} }) => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
@@ -200,30 +407,10 @@ const SalesReportsTab = () => {
             </span>
             {!loading && reports.length > 0 && (
               <button
-                onClick={() =>
-                  exportCSV(
-                    reports.map((r) => [
-                      r.restaurantId ?? '—',
-                      `${PERIOD_LABEL[r.period?.type] ?? r.period?.type ?? '—'}${r.period?.month ? ` mes ${r.period.month}` : ''}${r.period?.year ? ` ${r.period.year}` : ''}`,
-                      r.totalSales ?? 0,
-                      r.totalOrders ?? 0,
-                      r.averageTicket ?? 0,
-                      fmtDate(r.generatedAt),
-                    ]),
-                    [
-                      'Restaurante',
-                      'Período',
-                      'Ventas totales',
-                      'Pedidos',
-                      'Ticket promedio',
-                      'Generado',
-                    ],
-                    'reportes_ventas.csv'
-                  )
-                }
+                onClick={() => generateAdminSalesPDF(reports, resMap)}
                 className='text-xs text-fp-gold hover:text-fp-gold-hover font-medium transition-colors'
               >
-                Exportar CSV
+                ↓ Exportar PDF
               </button>
             )}
           </div>
@@ -264,7 +451,7 @@ const SalesReportsTab = () => {
                 {reports.map((r) => (
                   <tr key={r._id} className='hover:bg-fp-elevated/50 transition-colors'>
                     <td className='px-4 py-3 text-fp-text font-medium'>
-                      {r.restaurantId?.toString?.() ?? '—'}
+                      {resMap[r.restaurantId] ?? r.restaurantId?.toString?.() ?? '—'}
                     </td>
                     <td className='px-4 py-3 text-fp-muted'>
                       {PERIOD_LABEL[r.period?.type] ?? r.period?.type ?? '—'}
@@ -307,7 +494,7 @@ const SalesReportsTab = () => {
 };
 
 // ── Usage Stats tab ───────────────────────────────────────────────────────────
-const UsageStatsTab = () => {
+const UsageStatsTab = ({ resMap = {} }) => {
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(null);
@@ -380,32 +567,10 @@ const UsageStatsTab = () => {
             </span>
             {!loading && stats.length > 0 && (
               <button
-                onClick={() =>
-                  exportCSV(
-                    stats.map((s) => [
-                      s.restaurantId ?? '—',
-                      PERIOD_LABEL[s.period?.type] ?? s.period?.type ?? '—',
-                      s.reservationsCount ?? 0,
-                      s.eventReservations ?? 0,
-                      s.mostBusyHour ?? '—',
-                      s.newUsers ?? 0,
-                      s.repeatUsers ?? 0,
-                    ]),
-                    [
-                      'Restaurante',
-                      'Período',
-                      'Reservas',
-                      'Ev. Reservas',
-                      'Hora pico',
-                      'Nuevos usuarios',
-                      'Usuarios recurrentes',
-                    ],
-                    'estadisticas_uso.csv'
-                  )
-                }
+                onClick={() => generateAdminUsagePDF(stats, resMap)}
                 className='text-xs text-fp-gold hover:text-fp-gold-hover font-medium transition-colors'
               >
-                Exportar CSV
+                ↓ Exportar PDF
               </button>
             )}
           </div>
@@ -449,7 +614,7 @@ const UsageStatsTab = () => {
                 {stats.map((s) => (
                   <tr key={s._id} className='hover:bg-fp-elevated/50 transition-colors'>
                     <td className='px-4 py-3 text-fp-text font-medium'>
-                      {s.restaurantId?.toString?.() ?? '—'}
+                      {resMap[s.restaurantId] ?? s.restaurantId?.toString?.() ?? '—'}
                     </td>
                     <td className='px-4 py-3 text-fp-muted'>
                       {PERIOD_LABEL[s.period?.type] ?? s.period?.type ?? '—'}
@@ -493,6 +658,18 @@ const TABS = ['Ventas', 'Uso'];
 
 export const AdminReportsPage = () => {
   const [tab, setTab] = useState('Ventas');
+  const [resMap, setResMap] = useState({});
+
+  useEffect(() => {
+    getRestaurants({ isActive: 'all', limit: 200 })
+      .then((r) => {
+        const list = r.data?.data ?? r.data ?? [];
+        const map = {};
+        list.forEach((res) => { map[res._id] = res.name; });
+        setResMap(map);
+      })
+      .catch(() => {}); // silent — names just won't resolve
+  }, []);
 
   return (
     <div className='space-y-6 animate-fadeUp'>
@@ -501,32 +678,24 @@ export const AdminReportsPage = () => {
         <p className='text-fp-muted text-sm mt-0.5'>Métricas de ventas y uso de la plataforma</p>
       </div>
 
-      {/* Tabs + print */}
-      <div className='flex items-center justify-between gap-4 flex-wrap'>
-        <div className='flex gap-1 bg-fp-elevated p-1 rounded-lg w-fit'>
-          {TABS.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                tab === t
-                  ? 'bg-fp-surface text-fp-text shadow-sm'
-                  : 'text-fp-muted hover:text-fp-text'
-              }`}
-            >
-              {t === 'Ventas' ? 'Reportes de ventas' : 'Estadísticas de uso'}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={() => window.print()}
-          className='px-3 py-1.5 text-xs text-fp-muted border border-fp-border rounded-lg hover:text-fp-text hover:border-fp-gold/30 transition-colors'
-        >
-          Imprimir / PDF
-        </button>
+      {/* Tabs */}
+      <div className='flex gap-1 bg-fp-elevated p-1 rounded-lg w-fit'>
+        {TABS.map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              tab === t
+                ? 'bg-fp-surface text-fp-text shadow-sm'
+                : 'text-fp-muted hover:text-fp-text'
+            }`}
+          >
+            {t === 'Ventas' ? 'Reportes de ventas' : 'Estadísticas de uso'}
+          </button>
+        ))}
       </div>
 
-      {tab === 'Ventas' ? <SalesReportsTab /> : <UsageStatsTab />}
+      {tab === 'Ventas' ? <SalesReportsTab resMap={resMap} /> : <UsageStatsTab resMap={resMap} />}
     </div>
   );
 };
