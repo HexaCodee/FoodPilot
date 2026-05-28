@@ -5,6 +5,7 @@ import {
   getRestaurantByIdController,
   updateRestaurantController,
   changeRestaurantStatusController,
+  manageRestaurantAdminController,
 } from './restaurant.controller.js';
 import { validateCreateRestaurant } from '../../middlewares/restaurant-validator.js';
 
@@ -226,6 +227,8 @@ router.put('/:id', updateRestaurantController);
  *         description: Restaurante no encontrado
  */
 router.patch('/:id/activate', changeRestaurantStatusController);
+
+router.put('/:id/admins', manageRestaurantAdminController);
 
 /**
  * @swagger

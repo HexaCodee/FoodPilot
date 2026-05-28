@@ -6,7 +6,10 @@ import {
   updateRestaurant,
   activateRestaurant,
   deactivateRestaurant,
+  assignRestaurantAdmin,
+  unassignRestaurantAdmin,
 } from '../../../shared/apis/restaurants.js';
+import { getUsers } from '../../../shared/apis/users.js';
 import { StatusBadge } from '../../../shared/components/ui/Badge.jsx';
 import {
   Modal,
@@ -78,13 +81,127 @@ const Input = ({ value, onChange, placeholder, type = 'text' }) => (
 
 const Skeleton = () => (
   <tr>
-    {[...Array(6)].map((_, i) => (
+    {[...Array(7)].map((_, i) => (
       <td key={i} className='px-4 py-3'>
         <div className='h-4 bg-fp-border rounded animate-pulse' />
       </td>
     ))}
   </tr>
 );
+
+// ── Admins modal ──────────────────────────────────────────────────────────────
+const AdminsModal = ({ restaurant, onClose, onUpdated }) => {
+  const [users, setUsers] = useState([]);
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [toggling, setToggling] = useState(null);
+  const [assignedIds, setAssignedIds] = useState(new Set(restaurant?.adminUserIds ?? []));
+  const debounce = useRef(null);
+
+  const loadUsers = useCallback(async (s = '') => {
+    setLoading(true);
+    try {
+      const r = await getUsers({ role: 'RESTAURANT_ADMIN', search: s || undefined, limit: 50 });
+      setUsers(r.data?.users ?? r.data ?? []);
+    } catch {
+      toast.error('Error al cargar administradores');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadUsers(); }, [loadUsers]);
+
+  const handleSearch = (e) => {
+    const val = e.target.value;
+    setSearch(val);
+    clearTimeout(debounce.current);
+    debounce.current = setTimeout(() => loadUsers(val), 400);
+  };
+
+  const handleToggle = async (user) => {
+    const isAssigned = assignedIds.has(user.id);
+    setToggling(user.id);
+    try {
+      if (isAssigned) {
+        await unassignRestaurantAdmin(restaurant._id, user.id);
+        setAssignedIds((prev) => { const n = new Set(prev); n.delete(user.id); return n; });
+        toast.success(`${user.name} desasignado`);
+      } else {
+        await assignRestaurantAdmin(restaurant._id, user.id);
+        setAssignedIds((prev) => new Set([...prev, user.id]));
+        toast.success(`${user.name} asignado`);
+      }
+      onUpdated();
+    } catch (err) {
+      toast.error(err?.response?.data?.message ?? 'Error al actualizar la asignación');
+    } finally {
+      setToggling(null);
+    }
+  };
+
+  return (
+    <Modal isOpen={!!restaurant} onClose={onClose} title={`Administradores · ${restaurant?.name}`} maxWidth='max-w-lg'>
+      <div className='space-y-4'>
+        <p className='text-fp-subtle text-xs'>
+          Asigna o desasigna administradores de restaurante. Solo verán este restaurante en su panel.
+        </p>
+
+        {/* Search */}
+        <input
+          type='text'
+          value={search}
+          onChange={handleSearch}
+          placeholder='Buscar por nombre o usuario…'
+          className='w-full bg-fp-bg border border-fp-border rounded-lg px-3 py-2 text-fp-text text-sm placeholder:text-fp-subtle focus:outline-none focus:border-fp-gold/50 transition-colors'
+        />
+
+        {/* User list */}
+        <div className='space-y-1.5 max-h-72 overflow-y-auto'>
+          {loading ? (
+            [1, 2, 3].map((i) => (
+              <div key={i} className='h-12 bg-fp-elevated rounded-lg animate-pulse' />
+            ))
+          ) : users.length === 0 ? (
+            <p className='text-fp-subtle text-sm text-center py-6'>No se encontraron administradores de restaurante</p>
+          ) : (
+            users.map((u) => {
+              const assigned = assignedIds.has(u.id);
+              return (
+                <div
+                  key={u.id}
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-lg border transition-colors ${
+                    assigned ? 'border-fp-gold/40 bg-fp-gold-dim' : 'border-fp-border bg-fp-bg'
+                  }`}
+                >
+                  <div>
+                    <p className='text-fp-text text-sm font-medium'>{u.name} {u.surname}</p>
+                    <p className='text-fp-subtle text-xs'>{u.username} · {u.email}</p>
+                  </div>
+                  <button
+                    onClick={() => handleToggle(u)}
+                    disabled={toggling === u.id}
+                    className={`text-xs font-medium px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50 ${
+                      assigned
+                        ? 'bg-fp-elevated text-fp-muted hover:bg-red-900/20 hover:text-red-400'
+                        : 'bg-fp-gold text-fp-bg hover:bg-fp-gold-hover'
+                    }`}
+                  >
+                    {toggling === u.id ? '…' : assigned ? 'Desasignar' : 'Asignar'}
+                  </button>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      <ModalActions>
+        <BtnSecondary onClick={onClose}>Cerrar</BtnSecondary>
+      </ModalActions>
+    </Modal>
+  );
+};
 
 export const AdminRestaurantsPage = () => {
   const [restaurants, setRestaurants] = useState([]);
@@ -104,6 +221,9 @@ export const AdminRestaurantsPage = () => {
 
   // Status action loading
   const [statusLoading, setStatusLoading] = useState(null);
+
+  // Admins modal
+  const [adminsTarget, setAdminsTarget] = useState(null);
 
   const debounce = useRef(null);
   const LIMIT = 12;
@@ -316,7 +436,7 @@ export const AdminRestaurantsPage = () => {
           <table className='w-full text-sm'>
             <thead>
               <tr className='border-b border-fp-border'>
-                {['Restaurante', 'Categoría', 'Teléfono', 'Estado', 'Creado', 'Acciones'].map(
+                {['Restaurante', 'Categoría', 'Teléfono', 'Estado', 'Admins', 'Creado', 'Acciones'].map(
                   (h) => (
                     <th
                       key={h}
@@ -333,7 +453,7 @@ export const AdminRestaurantsPage = () => {
                 [...Array(LIMIT)].map((_, i) => <Skeleton key={i} />)
               ) : restaurants.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className='py-16 text-center'>
+                  <td colSpan={7} className='py-16 text-center'>
                     <BuildingIcon className='w-10 h-10 text-fp-subtle mx-auto mb-3' />
                     <p className='text-fp-muted text-sm'>No se encontraron restaurantes</p>
                     <button
@@ -362,11 +482,24 @@ export const AdminRestaurantsPage = () => {
                     <td className='px-4 py-3 whitespace-nowrap'>
                       <StatusBadge active={r.isActive} />
                     </td>
+                    <td className='px-4 py-3 whitespace-nowrap'>
+                      <span className='text-fp-subtle text-xs'>
+                        {(r.adminUserIds?.length ?? 0) === 0
+                          ? <span className='text-fp-subtle/60 italic'>Sin asignar</span>
+                          : `${r.adminUserIds.length} admin${r.adminUserIds.length !== 1 ? 's' : ''}`}
+                      </span>
+                    </td>
                     <td className='px-4 py-3 text-fp-muted whitespace-nowrap text-xs'>
                       {fmt(r.createdAt)}
                     </td>
                     <td className='px-4 py-3 whitespace-nowrap'>
                       <div className='flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity'>
+                        <button
+                          onClick={() => setAdminsTarget(r)}
+                          className='px-2.5 py-1 text-xs rounded-md border border-blue-700/40 text-blue-400 hover:bg-blue-900/20 transition-colors'
+                        >
+                          Admins
+                        </button>
                         <button
                           onClick={() => openEdit(r)}
                           className='px-2.5 py-1 text-xs rounded-md border border-fp-border text-fp-muted hover:text-fp-gold hover:border-fp-gold/40 transition-colors'
@@ -419,6 +552,15 @@ export const AdminRestaurantsPage = () => {
           </div>
         )}
       </div>
+
+      {/* Admins modal */}
+      {adminsTarget && (
+        <AdminsModal
+          restaurant={adminsTarget}
+          onClose={() => setAdminsTarget(null)}
+          onUpdated={() => load(page)}
+        />
+      )}
 
       {/* Create / Edit modal */}
       <Modal

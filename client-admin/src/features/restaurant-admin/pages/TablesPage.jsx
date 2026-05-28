@@ -19,6 +19,17 @@ import { TableIcon } from '../../../shared/components/ui/Icons.jsx';
 const LOCATIONS = ['Interior', 'Terraza', 'Barra', 'Jardín', 'VIP', 'Salón privado'];
 const STATUSES = ['DISPONIBLE', 'OCUPADA', 'RESERVADA', 'FUERA_DE_SERVICIO'];
 
+// 0=Dom, 1=Lun … 6=Sáb — mismo convenio que Date.getDay()
+const WEEK_DAYS = [
+  { label: 'Lu', value: 1 },
+  { label: 'Ma', value: 2 },
+  { label: 'Mi', value: 3 },
+  { label: 'Ju', value: 4 },
+  { label: 'Vi', value: 5 },
+  { label: 'Sá', value: 6 },
+  { label: 'Do', value: 0 },
+];
+
 const STATUS_LABEL = {
   DISPONIBLE: 'Disponible',
   OCUPADA: 'Ocupada',
@@ -59,7 +70,15 @@ const Sel = ({ children, ...props }) => (
   </select>
 );
 
-const EMPTY = { tableNumber: '', capacity: '', location: 'Interior', status: 'DISPONIBLE' };
+const EMPTY = {
+  tableNumber: '',
+  capacity: '',
+  location: 'Interior',
+  status: 'DISPONIBLE',
+  availableDays: [0, 1, 2, 3, 4, 5, 6],
+  availableFrom: '08:00',
+  availableTo: '22:00',
+};
 
 // ── Form modal ────────────────────────────────────────────────────────────────
 const TableFormModal = ({ isOpen, onClose, onSaved, restaurantId, editing }) => {
@@ -76,6 +95,9 @@ const TableFormModal = ({ isOpen, onClose, onSaved, restaurantId, editing }) => 
             capacity: editing.capacity,
             location: editing.location,
             status: editing.status,
+            availableDays: editing.availableDays ?? [0, 1, 2, 3, 4, 5, 6],
+            availableFrom: editing.availableFrom ?? '08:00',
+            availableTo: editing.availableTo ?? '22:00',
           }
         : EMPTY
     );
@@ -97,6 +119,9 @@ const TableFormModal = ({ isOpen, onClose, onSaved, restaurantId, editing }) => 
         capacity: Number(form.capacity),
         location: form.location,
         status: form.status,
+        availableDays: form.availableDays,
+        availableFrom: form.availableFrom,
+        availableTo: form.availableTo,
         restaurant: restaurantId,
       };
       editing ? await updateTable(editing._id, payload) : await createTable(payload);
@@ -147,6 +172,55 @@ const TableFormModal = ({ isOpen, onClose, onSaved, restaurantId, editing }) => 
               </option>
             ))}
           </Sel>
+        </Field>
+        <Field label='Días disponibles para reservar'>
+          <div className='flex gap-1.5'>
+            {WEEK_DAYS.map(({ label, value }) => {
+              const active = form.availableDays.includes(value);
+              return (
+                <button
+                  key={value}
+                  type='button'
+                  onClick={() => {
+                    const next = active
+                      ? form.availableDays.filter((d) => d !== value)
+                      : [...form.availableDays, value];
+                    set('availableDays', next);
+                  }}
+                  className={`w-9 h-9 rounded-lg text-xs font-semibold transition-colors ${
+                    active
+                      ? 'bg-fp-gold text-fp-bg'
+                      : 'bg-fp-bg border border-fp-border text-fp-muted hover:text-fp-text hover:border-fp-gold/30'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+          {form.availableDays.length === 0 && (
+            <p className='text-red-400 text-xs mt-1'>Selecciona al menos un día.</p>
+          )}
+        </Field>
+        <Field label='Horario de reservaciones'>
+          <div className='grid grid-cols-2 gap-3'>
+            <div>
+              <p className='text-fp-subtle text-xs mb-1'>Desde</p>
+              <Input
+                type='time'
+                value={form.availableFrom}
+                onChange={(e) => set('availableFrom', e.target.value)}
+              />
+            </div>
+            <div>
+              <p className='text-fp-subtle text-xs mb-1'>Hasta</p>
+              <Input
+                type='time'
+                value={form.availableTo}
+                onChange={(e) => set('availableTo', e.target.value)}
+              />
+            </div>
+          </div>
         </Field>
         {error && <p className='text-red-400 text-xs'>{error}</p>}
       </div>

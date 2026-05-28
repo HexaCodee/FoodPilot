@@ -13,6 +13,7 @@ export const fetchRestaurants = async ({
   isActive,
   category,
   search,
+  adminUserId,
 } = {}) => {
   const filter = {};
 
@@ -27,6 +28,9 @@ export const fetchRestaurants = async ({
 
   // Filtro por categoría
   if (category) filter.category = category;
+
+  // Filtro por administrador asignado
+  if (adminUserId) filter.adminUserIds = adminUserId;
 
   // Búsqueda por nombre o dirección
   if (search) {
@@ -79,4 +83,22 @@ export const updateRestaurantStatus = async ({ id, isActive }) => {
 // Actualizar rating (llamado internamente cuando se crea una reseña)
 export const updateRestaurantRating = async ({ id, rating, reviewCount }) => {
   return Restaurant.findByIdAndUpdate(id, { rating, reviewCount }, { new: true });
+};
+
+// Asignar administrador a un restaurante
+export const assignAdmin = async (id, userId) => {
+  return Restaurant.findByIdAndUpdate(
+    id,
+    { $addToSet: { adminUserIds: userId } },
+    { new: true }
+  );
+};
+
+// Desasignar administrador de un restaurante
+export const unassignAdmin = async (id, userId) => {
+  return Restaurant.findByIdAndUpdate(
+    id,
+    { $pull: { adminUserIds: userId } },
+    { new: true }
+  );
 };

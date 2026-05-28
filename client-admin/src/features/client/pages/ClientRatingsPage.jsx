@@ -35,7 +35,7 @@ const fmtDate = (d) =>
     : '—';
 
 // ── Rating form ───────────────────────────────────────────────────────────────
-const RatingForm = ({ restaurantId, userId, existing, onSaved }) => {
+const RatingForm = ({ restaurantId, userId, user, existing, onSaved }) => {
   const [rating, setRating] = useState(existing?.rating ?? 0);
   const [comment, setComment] = useState(existing?.comment ?? '');
   const [saving, setSaving] = useState(false);
@@ -53,7 +53,8 @@ const RatingForm = ({ restaurantId, userId, existing, onSaved }) => {
     }
     setSaving(true);
     try {
-      await createRating({ restaurantId, userId, rating, comment: comment.trim() || undefined });
+      const userName = [user?.name, user?.surname].filter(Boolean).join(' ') || 'Usuario';
+      await createRating({ restaurantId, userId, userName, rating, comment: comment.trim() || undefined });
       toast.success(existing ? 'Calificación actualizada' : 'Calificación enviada');
       onSaved();
     } catch (err) {
@@ -222,6 +223,7 @@ export const ClientRatingsPage = () => {
           <RatingForm
             restaurantId={selected}
             userId={user?.id}
+            user={user}
             existing={myRating}
             onSaved={handleRatingSaved}
           />
@@ -269,8 +271,8 @@ export const ClientRatingsPage = () => {
                   <span className='text-fp-subtle text-xs'>{fmtDate(rt.createdAt)}</span>
                 </div>
                 {rt.comment && <p className='text-fp-muted text-sm mt-1'>{rt.comment}</p>}
-                <p className='text-fp-subtle text-xs mt-1 font-mono'>
-                  …{rt.userId?.slice(-6) ?? '—'}
+                <p className='text-fp-subtle text-xs mt-2 font-medium'>
+                  {rt.userName || 'Usuario anónimo'}
                 </p>
               </div>
             ))}

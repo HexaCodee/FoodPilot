@@ -29,11 +29,13 @@ exports.createReservation = async (req, res, next) => {
   }
 };
 
-// Obtener todas las reservas (filtrar por userId si se proporciona)
+// Obtener todas las reservas (filtrar por userId, tableId o restaurantId si se proporcionan)
 exports.getReservations = async (req, res, next) => {
   try {
     const filter = {};
     if (req.query.userId) filter.userId = req.query.userId;
+    if (req.query.tableId) filter.tableId = req.query.tableId;
+    if (req.query.restaurantId) filter.restaurantId = req.query.restaurantId;
     const reservations = await Reservation.find(filter).sort({ createdAt: -1 });
     res.json(reservations);
   } catch (error) {
@@ -102,6 +104,35 @@ exports.cancelReservation = async (req, res, next) => {
     // Liberar la mesa
     await markTable(reservation.tableNumber, 'DISPONIBLE');
     res.json(reservation);
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Cancelar todas las reservas ACTIVAS de una mesa (llamado internamente al desactivar mesa)
+exports.cancelReservationsByTable = async (req, res, next) => {
+  try {
+    const { tableId, tableNumber, restaurantId } = req.body;
+
+    if (!tableId && !tableNumber) {
+      return res.status(400).json({ message: 'tableId o tableNumber son requeridos' });
+    }
+
+    // Build an $or filter so we catch both new reservations (have tableId)
+    // and legacy ones (only have tableNumber + restaurantId)
+    const orClauses = [];
+    if (tableId) orClauses.push({ tableId });
+    if (tableNumber && restaurantId) orClauses.push({ tableNumber: String(tableNumber), restaurantId });
+    else if (tableNumber) orClauses.push({ tableNumber: String(tableNumber) });
+
+    const filter = { status: 'ACTIVA', $or: orClauses };
+
+    const result = await Reservation.updateMany(filter, {
+      status: 'CANCELADA',
+      cancelledByAdmin: true,
+    });
+
+    res.json({ message: 'Reservas canceladas', count: result.modifiedCount });
   } catch (error) {
     next(error);
   }

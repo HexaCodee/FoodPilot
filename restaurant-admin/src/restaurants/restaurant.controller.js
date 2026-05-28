@@ -4,6 +4,8 @@ import {
   createRestaurant,
   updateRestaurant,
   updateRestaurantStatus,
+  assignAdmin,
+  unassignAdmin,
 } from './restaurant.service.js';
 
 // Crear restaurante
@@ -27,13 +29,14 @@ export const createRestaurantController = async (req, res) => {
 // Obtener todos los restaurantes con paginación y filtros
 export const getRestaurantsController = async (req, res) => {
   try {
-    const { page = 1, limit = 10, isActive = true, category, search } = req.query;
+    const { page = 1, limit = 10, isActive = true, category, search, adminUserId } = req.query;
     const { restaurants, pagination } = await fetchRestaurants({
       page,
       limit,
       isActive,
       category,
       search,
+      adminUserId,
     });
     res.status(200).json({
       success: true,
@@ -95,6 +98,26 @@ export const updateRestaurantController = async (req, res) => {
       message: 'Error al actualizar el restaurante',
       error: error.message,
     });
+  }
+};
+
+// Asignar o desasignar un administrador de un restaurante
+export const manageRestaurantAdminController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userId, remove = false } = req.body;
+    if (!userId) {
+      return res.status(400).json({ success: false, message: 'userId es requerido' });
+    }
+    const restaurant = remove
+      ? await unassignAdmin(id, userId)
+      : await assignAdmin(id, userId);
+    if (!restaurant) {
+      return res.status(404).json({ success: false, message: 'Restaurante no encontrado' });
+    }
+    res.status(200).json({ success: true, data: restaurant });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error al gestionar administrador', error: error.message });
   }
 };
 

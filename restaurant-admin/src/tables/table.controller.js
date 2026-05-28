@@ -112,6 +112,25 @@ export const changeTableStatusController = async (req, res) => {
         message: 'Mesa no encontrada',
       });
     }
+
+    // Al desactivar, cancelar todas las reservas ACTIVAS de esta mesa
+    if (!isAvailable) {
+      const ordersUrl = process.env.ORDERS_SERVICE_URL ?? 'http://localhost:3030';
+      try {
+        await fetch(`${ordersUrl}/api/reservations/cancel-by-table`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tableId: id,
+            tableNumber: table.tableNumber,
+            restaurantId: String(table.restaurant?._id ?? table.restaurant),
+          }),
+        });
+      } catch {
+        // No bloquear si el servicio de reservas no responde
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: `Mesa ${action} exitosamente`,

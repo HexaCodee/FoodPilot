@@ -416,9 +416,9 @@ export const MenuPage = () => {
           {filtered.map((item) => (
             <div
               key={item._id}
-              className={`bg-fp-surface border rounded-xl overflow-hidden flex flex-col gap-3 transition-colors ${
+              className={`bg-fp-surface border rounded-xl overflow-hidden flex flex-col gap-3 transition-all duration-200 ${
                 item.isAvailable
-                  ? 'border-fp-border hover:border-fp-gold/20'
+                  ? 'border-fp-border hover:border-fp-gold/20 hover:scale-[1.05] hover:shadow-lg hover:shadow-black/20'
                   : 'border-fp-border opacity-60'
               }`}
             >

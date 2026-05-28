@@ -5,6 +5,8 @@ const BASE = '/tables';
 export const getTables = ({ restaurant, page = 1, limit = 50, isAvailable = 'all' } = {}) =>
   axiosAdmin.get(BASE, { params: { restaurant, page, limit, isAvailable } });
 
+export const getTableById = (id) => axiosAdmin.get(`${BASE}/${id}`);
+
 export const createTable = (data) => axiosAdmin.post(BASE, data);
 
 export const updateTable = (id, data) => axiosAdmin.put(`${BASE}/${id}`, data);

@@ -1,16 +1,17 @@
 import Rating from './rating.model.js';
 import Restaurant from '../restaurants/restaurant.model.js';
 
-export const createOrUpdateRating = async ({ restaurantId, userId, rating, comment }) => {
+export const createOrUpdateRating = async ({ restaurantId, userId, userName, rating, comment }) => {
   const existing = await Rating.findOne({ restaurant: restaurantId, userId });
 
   let result;
   if (existing) {
     existing.rating = rating;
     existing.comment = comment;
+    if (userName) existing.userName = userName;
     result = await existing.save();
   } else {
-    result = await Rating.create({ restaurant: restaurantId, userId, rating, comment });
+    result = await Rating.create({ restaurant: restaurantId, userId, userName, rating, comment });
   }
 
   // Recalculate restaurant average rating
