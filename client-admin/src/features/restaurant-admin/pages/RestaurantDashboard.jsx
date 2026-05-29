@@ -12,9 +12,7 @@ import {
   UtensilsIcon,
   BagIcon,
   CalendarIcon,
-  BarChartIcon,
   BuildingIcon,
-  CheckIcon,
 } from '../../../shared/components/ui/Icons.jsx';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -59,109 +57,94 @@ const OrderRow = ({ order }) => (
   </div>
 );
 
-// ── Restaurant picker (shown when no restaurant selected) ─────────────────────
-const RestaurantPicker = ({ onSelect }) => {
-  const user = useAuthStore((s) => s.user);
-  const setAssignedCount = useRestaurantStore((s) => s.setAssignedCount);
-  const [restaurants, setRestaurants] = useState([]);
-  const [loading, setLoading] = useState(true);
+// ── Validation loading skeleton ───────────────────────────────────────────────
+const ValidatingSkeleton = () => (
+  <div className='space-y-6 animate-fadeUp'>
+    <div>
+      <Skeleton className='h-8 w-48 mb-2' />
+      <Skeleton className='h-4 w-64' />
+    </div>
+    <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4'>
+      {[1, 2, 3, 4].map((i) => (
+        <Skeleton key={i} className='h-32 w-full' />
+      ))}
+    </div>
+  </div>
+);
 
-  useEffect(() => {
-    if (!user?.id) return;
-    getRestaurants({ adminUserId: user.id, isActive: 'all', limit: 100 })
-      .then((r) => {
-        const list = r.data?.data ?? [];
-        setAssignedCount(list.length);
-        // Auto-select if only one restaurant assigned
-        if (list.length === 1) {
-          onSelect(list[0]);
-        } else {
-          setRestaurants(list);
-          setLoading(false);
-        }
-      })
-      .catch(() => {
-        setAssignedCount(0);
-        setRestaurants([]);
-        setLoading(false);
-      });
-  }, [user?.id, onSelect, setAssignedCount]);
+// ── Restaurant picker (shown when no restaurant selected or none assigned) ────
+// Pure presentational — receives the already-fetched list from the parent.
+const RestaurantPicker = ({ restaurants, onSelect }) => (
+  <div className='space-y-6 animate-fadeUp'>
+    <div>
+      <h1 className='font-display text-2xl text-fp-text'>Mi Restaurante</h1>
+      <p className='text-fp-muted text-sm mt-0.5'>Selecciona el restaurante que deseas gestionar</p>
+    </div>
 
-  if (loading) {
-    return (
-      <div className='space-y-6 animate-fadeUp'>
-        <div>
-          <h1 className='font-display text-2xl text-fp-text'>Mi Restaurante</h1>
+    <div className='bg-fp-surface border border-fp-border rounded-xl p-6 max-w-2xl'>
+      <div className='flex items-center gap-3 mb-5'>
+        <div className='p-2.5 rounded-lg bg-fp-gold-dim'>
+          <BuildingIcon className='w-5 h-5 text-fp-gold' />
         </div>
-        <div className='space-y-2 max-w-2xl'>
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className='h-14 w-full' />
+        <div>
+          <h2 className='text-fp-text font-medium'>¿Cuál es tu restaurante?</h2>
+          <p className='text-fp-subtle text-xs mt-0.5'>Esta selección se guardará en tu sesión</p>
+        </div>
+      </div>
+
+      {restaurants.length === 0 ? (
+        <div className='text-center py-8'>
+          <BuildingIcon className='w-10 h-10 text-fp-subtle mx-auto mb-3' />
+          <p className='text-fp-muted text-sm font-medium'>Sin restaurantes asignados</p>
+          <p className='text-fp-subtle text-xs mt-1 max-w-xs mx-auto'>
+            El administrador de la plataforma aún no te ha asignado ningún restaurante.
+            Contacta con él para que te asigne uno.
+          </p>
+        </div>
+      ) : (
+        <div className='space-y-2'>
+          {restaurants.map((r) => (
+            <button
+              key={r._id}
+              onClick={() => onSelect(r)}
+              className='w-full flex items-center justify-between px-4 py-3.5 rounded-lg border border-fp-border hover:border-fp-gold/40 hover:bg-fp-gold-dim transition-colors text-left group'
+            >
+              <div>
+                <p className='text-fp-text text-sm font-medium group-hover:text-fp-gold transition-colors'>
+                  {r.name}
+                </p>
+                <p className='text-fp-subtle text-xs mt-0.5'>
+                  {r.category} · {r.address}
+                </p>
+              </div>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full ${r.isActive ? 'bg-fp-success-dim text-fp-success' : 'bg-fp-elevated text-fp-muted'}`}
+              >
+                {r.isActive ? 'Activo' : 'Inactivo'}
+              </span>
+            </button>
           ))}
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className='space-y-6 animate-fadeUp'>
-      <div>
-        <h1 className='font-display text-2xl text-fp-text'>Mi Restaurante</h1>
-        <p className='text-fp-muted text-sm mt-0.5'>Selecciona el restaurante que deseas gestionar</p>
-      </div>
-
-      <div className='bg-fp-surface border border-fp-border rounded-xl p-6 max-w-2xl'>
-        <div className='flex items-center gap-3 mb-5'>
-          <div className='p-2.5 rounded-lg bg-fp-gold-dim'>
-            <BuildingIcon className='w-5 h-5 text-fp-gold' />
-          </div>
-          <div>
-            <h2 className='text-fp-text font-medium'>¿Cuál es tu restaurante?</h2>
-            <p className='text-fp-subtle text-xs mt-0.5'>Esta selección se guardará en tu sesión</p>
-          </div>
-        </div>
-
-        {restaurants.length === 0 ? (
-          <div className='text-center py-8'>
-            <BuildingIcon className='w-10 h-10 text-fp-subtle mx-auto mb-3' />
-            <p className='text-fp-muted text-sm font-medium'>Sin restaurantes asignados</p>
-            <p className='text-fp-subtle text-xs mt-1 max-w-xs mx-auto'>
-              El administrador de la plataforma aún no te ha asignado ningún restaurante.
-              Contacta con él para que te asigne uno.
-            </p>
-          </div>
-        ) : (
-          <div className='space-y-2'>
-            {restaurants.map((r) => (
-              <button
-                key={r._id}
-                onClick={() => onSelect(r)}
-                className='w-full flex items-center justify-between px-4 py-3.5 rounded-lg border border-fp-border hover:border-fp-gold/40 hover:bg-fp-gold-dim transition-colors text-left group'
-              >
-                <div>
-                  <p className='text-fp-text text-sm font-medium group-hover:text-fp-gold transition-colors'>
-                    {r.name}
-                  </p>
-                  <p className='text-fp-subtle text-xs mt-0.5'>
-                    {r.category} · {r.address}
-                  </p>
-                </div>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full ${r.isActive ? 'bg-fp-success-dim text-fp-success' : 'bg-fp-elevated text-fp-muted'}`}
-                >
-                  {r.isActive ? 'Activo' : 'Inactivo'}
-                </span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
     </div>
-  );
-};
+  </div>
+);
 
 // ── Main dashboard ────────────────────────────────────────────────────────────
 export const RestaurantDashboard = () => {
-  const { selectedRestaurant, setSelectedRestaurant, clearRestaurant, assignedCount } = useRestaurantStore();
+  const {
+    selectedRestaurant,
+    setSelectedRestaurant,
+    clearRestaurant,
+    setAssignedCount,
+    assignedCount,
+  } = useRestaurantStore();
+  const user = useAuthStore((s) => s.user);
+
+  // assignedList: list fetched on mount to validate ownership and populate the picker
+  const [assignedList, setAssignedList] = useState([]);
+  // validating: true while we verify the persisted restaurant belongs to this user
+  const [validating, setValidating] = useState(true);
 
   const [stats, setStats] = useState({
     tables: null,
@@ -172,6 +155,49 @@ export const RestaurantDashboard = () => {
   const [recentOrders, setRecentOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ── Validate on mount ───────────────────────────────────────────────────────
+  // Always fetch the user's assigned restaurants so we can:
+  //   1. Verify the persisted selectedRestaurant actually belongs to this user
+  //      (prevents leftover data from a previous session showing the wrong restaurant)
+  //   2. Keep assignedCount accurate so the "Cambiar restaurante" button appears correctly
+  //   3. Auto-select when only one restaurant is assigned
+  useEffect(() => {
+    if (!user?.id) {
+      setValidating(false);
+      return;
+    }
+
+    getRestaurants({ adminUserId: user.id, isActive: 'all', limit: 100 })
+      .then((r) => {
+        const list = r.data?.data ?? [];
+        setAssignedList(list);
+        setAssignedCount(list.length);
+
+        const currentId = useRestaurantStore.getState().selectedRestaurant?._id;
+
+        if (currentId) {
+          // Check the persisted restaurant is still assigned to this user
+          const stillAssigned = list.some((res) => res._id === currentId);
+          if (!stillAssigned) {
+            clearRestaurant();
+            // If only one option, auto-select it right away
+            if (list.length === 1) setSelectedRestaurant(list[0]);
+          }
+        } else {
+          // Nothing selected yet — auto-select if there's only one
+          if (list.length === 1) setSelectedRestaurant(list[0]);
+        }
+      })
+      .catch(() => {
+        setAssignedList([]);
+        setAssignedCount(0);
+        clearRestaurant();
+      })
+      .finally(() => setValidating(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
+
+  // ── Fetch dashboard data once a valid restaurant is selected ─────────────────
   useEffect(() => {
     if (!selectedRestaurant) return;
     setLoading(true);
@@ -201,8 +227,11 @@ export const RestaurantDashboard = () => {
       .finally(() => setLoading(false));
   }, [selectedRestaurant]);
 
+  // ── Render ──────────────────────────────────────────────────────────────────
+  if (validating) return <ValidatingSkeleton />;
+
   if (!selectedRestaurant) {
-    return <RestaurantPicker onSelect={setSelectedRestaurant} />;
+    return <RestaurantPicker restaurants={assignedList} onSelect={setSelectedRestaurant} />;
   }
 
   return (

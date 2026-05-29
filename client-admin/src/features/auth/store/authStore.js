@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { axiosAuth, setAuthHandlers } from '../../../shared/apis/api.js';
+import { useRestaurantStore } from '../../restaurant-admin/store/restaurantStore.js';
 
 const VALID_ROLES = ['CLIENT', 'RESTAURANT_ADMIN', 'PLATFORM_ADMIN'];
 
@@ -47,6 +48,11 @@ export const useAuthStore = create(
       getDashboardPath: () => getDashboardPath(get().user?.role),
 
       logout: () => {
+        // Clear restaurant selection so it never leaks into a different user's session
+        const { clearRestaurant, setAssignedCount } = useRestaurantStore.getState();
+        clearRestaurant();
+        setAssignedCount(0);
+
         set({
           user: null,
           token: null,
