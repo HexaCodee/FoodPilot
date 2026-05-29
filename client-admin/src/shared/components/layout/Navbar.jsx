@@ -2,6 +2,7 @@ import { useRef, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../features/auth/store/authStore';
 import { MenuIcon, UserIcon, LogOutIcon } from '../ui/Icons.jsx';
+import logoImg from '../../../assets/img/FoodPilot.png';
 
 const PAGE_TITLES = {
   // Admin
@@ -99,7 +100,17 @@ export const Navbar = ({ onMenuClick }) => {
         >
           <MenuIcon className='w-5 h-5' />
         </button>
-        <h2 className='text-fp-text font-medium text-sm'>{title}</h2>
+
+        <div className='flex items-center gap-3'>
+          <div className='hidden sm:flex items-center gap-3'>
+            <img src={logoImg} alt='FoodPilot logo' className='h-10 w-10 rounded-2xl bg-fp-sidebar border border-fp-border p-1 object-contain' />
+            <div className='hidden md:flex flex-col'>
+              <span className='text-fp-text text-sm font-semibold leading-none'>FoodPilot</span>
+              <span className='text-fp-muted text-[11px] uppercase tracking-[0.2em]'>{title}</span>
+            </div>
+          </div>
+          <h2 className='text-fp-text font-medium text-sm sm:hidden'>{title}</h2>
+        </div>
       </div>
 
       {/* Right: user menu */}
