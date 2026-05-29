@@ -77,7 +77,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
         <div className='flex items-center justify-between px-5 py-5 border-b border-fp-border'>
           <div>
             <h1 className='font-display text-xl text-fp-gold tracking-wide'>FoodPilot</h1>
-            <p className='text-fp-subtle text-xs tracking-widest uppercase mt-0.5'>Management</p>
+            <p className='text-fp-subtle text-xs tracking-widest uppercase mt-0.5'>Volamos tu antojo</p>
           </div>
           <button onClick={onClose} className='lg:hidden text-fp-muted hover:text-fp-text p-1'>
             <CloseIcon className='w-5 h-5' />
@@ -104,7 +104,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
                 ${
                   isActive
                     ? 'bg-fp-gold-dim text-fp-gold border border-fp-gold/20'
-                    : 'text-fp-muted hover:text-fp-text hover:bg-fp-elevated'
+                    : 'text-fp-muted hover:text-fp-gold hover:bg-fp-gold-dim/10'
                 }`
               }
             >

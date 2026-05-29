@@ -5,6 +5,7 @@ import { LoginForm } from '../components/LoginForm.jsx';
 import { ForgotPassword } from '../components/ForgotPassword.jsx';
 import { RegisterForm } from '../components/RegisterForm.jsx';
 import { ResetPasswordForm } from '../components/ResetPasswordForm.jsx';
+import logoImg from '../../../assets/img/FoodPilot.png';
 
 const VIEWS = {
   login: { title: 'Bienvenido de nuevo', subtitle: 'Accede a tu cuenta para continuar' },
@@ -49,8 +50,12 @@ export const AuthPage = () => {
 
           <div className='px-8 py-8'>
             {/* Brand */}
-            <div className='text-center mb-7'>
-              <h1 className='font-display text-3xl text-fp-gold mb-0.5 tracking-wide'>FoodPilot</h1>
+            <div className='flex flex-col items-center gap-4 text-center mb-7'>
+              <img src={logoImg} alt='FoodPilot logo' className='w-28 h-28 object-cover rounded-3xl shadow-[0_18px_60px_rgba(183,133,60,0.12)]' />
+              <div>
+                <h1 className='font-display text-3xl text-fp-gold mb-0.5 tracking-wide'>FoodPilot</h1>
+                <p className='text-fp-muted text-xs uppercase tracking-[0.28em]'>Volamos tu antojo</p>
+              </div>
               <div className='gold-divider mx-auto w-16 mt-2 mb-5' />
               <h2 className='text-fp-text text-lg font-semibold'>{title}</h2>
               <p className='text-fp-muted text-sm mt-1'>{subtitle}</p>
