@@ -330,9 +330,10 @@ public class AuthService(
 
         // Generar token de reset
         var resetToken = TokenGenerator.GeneratePasswordResetToken();
-        
+
         var passwordReset = new UserPasswordReset
         {
+            Id = UuidGenerator.GenerateUserId(),
             UserId = user.Id,
             PasswordResetToken = resetToken,
             PasswordResetTokenExpiry = DateTime.UtcNow.AddHours(1)
@@ -341,16 +342,20 @@ public class AuthService(
         // Guardar usando el método directo
         await userRepository.UpdatePasswordResetAsync(passwordReset);
 
-        // Enviar email (si falla, continuar con éxito por seguridad)
-        try
+        // Enviar email en background para no bloquear la respuesta HTTP
+        // (el token ya está guardado — el correo puede llegar con un pequeño retraso)
+        _ = Task.Run(async () =>
         {
-            await emailService.SendPasswordResetAsync(user.Email, user.Username, resetToken);
-            logger.LogInformation("Password reset email sent to {Email}", user.Email);
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Failed to send password reset email to {Email}", user.Email);
-        }
+            try
+            {
+                await emailService.SendPasswordResetAsync(user.Email, user.Username, resetToken);
+                logger.LogInformation("Password reset email sent to {Email}", user.Email);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Failed to send password reset email to {Email}", user.Email);
+            }
+        });
 
         return new EmailResponseDto
         {

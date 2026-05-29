@@ -147,8 +147,6 @@ public class EmailService(IConfiguration configuration, ILogger<EmailService> lo
 
                 // Enviar email
                 await client.SendAsync(message);
-                // Enviar email
-                await client.SendAsync(message);
                 logger.LogInformation("Email enviado exitosamente");
 
                 await client.DisconnectAsync(true);
