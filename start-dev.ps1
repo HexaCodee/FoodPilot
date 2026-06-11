@@ -25,7 +25,8 @@ $services = @(
     @{ title = "RESTAURANT"; dir = "$root\restaurant-admin";   cmd = "pnpm run dev" },
     @{ title = "ORDERS";     dir = "$root\order-tracking-api"; cmd = "pnpm run dev" },
     @{ title = "EVENTS";     dir = "$root\event-service";      cmd = "pnpm run dev" },
-    @{ title = "CLIENT";     dir = "$root\client-admin";       cmd = "pnpm run dev" }
+    @{ title = "CLIENT";     dir = "$root\client-admin";       cmd = "pnpm run dev" },
+    @{ title = "MOBILE";     dir = "$root\client-mobile";      cmd = "npx expo start" }
 )
 
 Write-Host "[SERVICES] Opening terminals..." -ForegroundColor Cyan

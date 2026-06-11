@@ -37,11 +37,19 @@ public class GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExcep
                 Detail = businessEx.Message,
                 ErrorCode = businessEx.ErrorCode
             },
-            UnauthorizedAccessException => new ErrorResponse
+            // Antes se devolvía siempre el mensaje genérico "Credenciales inválidas o
+            // permisos insuficientes", lo que ocultaba al usuario casos como la cuenta
+            // deshabilitada por falta de verificación de email (LoginAsync lanza
+            // "La cuenta de usuario está deshabilitada" en ese caso). Ahora se
+            // preserva el mensaje real del servicio para que el cliente (web/móvil)
+            // pueda mostrar la causa correcta.
+            UnauthorizedAccessException unauthEx => new ErrorResponse
             {
                 StatusCode = (int)HttpStatusCode.Unauthorized,
                 Title = "Unauthorized",
-                Detail = "Credenciales inválidas o permisos insuficientes"
+                Detail = string.IsNullOrWhiteSpace(unauthEx.Message)
+                    ? "Credenciales inválidas o permisos insuficientes"
+                    : unauthEx.Message
             },
             ArgumentException argEx => new ErrorResponse
             {
