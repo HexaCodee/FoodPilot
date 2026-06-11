@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native build artifacts (in case the project gets ejected)
+android/
+ios/
+
+# Native signing/credentials
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+*.log
+
+# Local env files (.env.example is the template and stays tracked)
+.env
+.env.local
+.env*.local
+
+# OS
+.DS_Store

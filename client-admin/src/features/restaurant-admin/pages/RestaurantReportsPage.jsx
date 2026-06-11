@@ -376,7 +376,11 @@ const SalesTab = ({ restaurantId, restaurantName }) => {
       const orders = await getOrders({ restaurantId, status: 'ENTREGADO', limit: 2000 }).then(
         (r) =>
           (Array.isArray(r.data) ? r.data : []).filter(
-            (o) => o.status === 'ENTREGADO' && new Date(o.createdAt) > sinceDate
+            // Usar updatedAt: es cuando el pedido fue marcado ENTREGADO,
+            // no createdAt (que es cuando se creó, independientemente de cuándo se completó).
+            // Así los pedidos creados antes del último reporte pero completados después
+            // quedan correctamente incluidos en el período actual.
+            (o) => o.status === 'ENTREGADO' && new Date(o.updatedAt) > sinceDate
           )
       );
       setCurrentOrders(orders);

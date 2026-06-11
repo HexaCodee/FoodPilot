@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "FoodPilot",
+    "slug": "foodpilot-client",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#100F0C"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.foodpilot.client"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#100F0C"
+      },
+      "package": "com.foodpilot.client",
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-asset",
+      "@react-native-community/datetimepicker"
+    ]
+  }
+}
