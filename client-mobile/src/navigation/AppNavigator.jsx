@@ -1,9 +1,12 @@
 // client-mobile/src/navigation/AppNavigator.jsx
 import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuthStore } from '../shared/store/authStore.js';
 import { AuthNavigator } from './AuthNavigator.jsx';
 import { MainNavigator } from './MainNavigator.jsx';
 import { FullScreenLoader } from '../shared/components/Common.jsx';
+
+const RootStack = createNativeStackNavigator();
 
 export const AppNavigator = () => {
   const { isAuthenticated, _hasHydrated } = useAuthStore();
@@ -13,7 +16,13 @@ export const AppNavigator = () => {
 
   return (
     <NavigationContainer>
-      {isAuthenticated ? <MainNavigator /> : <AuthNavigator />}
+      <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        {isAuthenticated ? (
+          <RootStack.Screen name='Main' component={MainNavigator} />
+        ) : (
+          <RootStack.Screen name='Auth' component={AuthNavigator} />
+        )}
+      </RootStack.Navigator>
     </NavigationContainer>
   );
 };
