@@ -58,13 +58,18 @@ export const useAuthStore = create(
 
       // ── Logout ───────────────────────────────────────────────────────────────
       logout: async () => {
-        await deleteRefreshToken();
+        try {
+          await deleteRefreshToken();
+        } catch {
+          // ignorar limpieza de SecureStore
+        }
         set({
           token: null,
           user: null,
           expiresAt: null,
           isAuthenticated: false,
         });
+        await useAuthStore.persist?.clearStorage?.();
       },
 
       // ── Actualizar solo el access token (tras refresh) ────────────────────────

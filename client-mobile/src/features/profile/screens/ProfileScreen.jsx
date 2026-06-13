@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  Alert, StyleSheet, Image,
+  StyleSheet, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -56,22 +56,13 @@ export const ProfileScreen = ({ navigation }) => {
     }
   }, [user, editing, reset]);
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Cerrar sesión',
-      '¿Seguro que deseas cerrar sesión?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Cerrar sesión',
-          style: 'destructive',
-          onPress: async () => {
-            setLoggingOut(true);
-            await logout();
-          },
-        },
-      ]
-    );
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   // Editar perfil: PUT /users/me { username, profilePictureUrl } -> actualiza el store
