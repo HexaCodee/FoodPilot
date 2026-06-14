@@ -49,3 +49,7 @@ project.assets.json
 
 ## [Uploads - user generated content, not tracked in git]
 restaurant-admin/uploads/
+Authentication-service/auth-service/src/AuthService.Api/wwwroot/uploads/
+
+## [ASP.NET Core Data Protection keys - machine-specific]
+Authentication-service/auth-service/src/AuthService.Api/keys/

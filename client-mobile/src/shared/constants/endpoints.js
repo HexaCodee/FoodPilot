@@ -58,6 +58,7 @@ export const ENDPOINTS = {
     RESET_PASSWORD: `${AUTH_BASE}/auth/reset-password`,
     VERIFY_EMAIL: `${AUTH_BASE}/auth/verify-email`,
     ME: `${AUTH_BASE}/users/me`,
+    ME_PROFILE_PICTURE: `${AUTH_BASE}/users/me/profile-picture`,
   },
 
   // ── Restaurant Admin ──────────────────────────────────────────────────────

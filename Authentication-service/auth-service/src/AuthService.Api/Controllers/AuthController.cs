@@ -46,6 +46,46 @@ public class AuthController(IAuthService authService) : ControllerBase
     }
 
     /// <summary>
+    /// Renueva el access token usando un refresh token vigente.
+    /// </summary>
+    /// <remarks>
+    /// El refresh token se obtiene al hacer login. Cada renovación rota (invalida)
+    /// el refresh token usado y entrega uno nuevo.
+    /// </remarks>
+    /// <param name="dto">Objeto con el refresh token</param>
+    /// <returns>Nuevo access token, refresh token y datos del usuario</returns>
+    /// <response code="200">Token renovado correctamente.</response>
+    /// <response code="401">Refresh token inválido, revocado o expirado.</response>
+    [HttpPost("refresh")]
+    [EnableRateLimiting("ApiPolicy")]
+    [SwaggerOperation(
+        Summary = "Renueva el access token",
+        Description = "Usa un refresh token vigente para obtener un nuevo access token"
+    )]
+    public async Task<ActionResult<RefreshResponseDto>> Refresh([FromBody] RefreshTokenDto dto)
+    {
+        var result = await authService.RefreshTokenAsync(dto.RefreshToken);
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Cierra la sesión revocando el refresh token.
+    /// </summary>
+    /// <param name="dto">Objeto con el refresh token a revocar</param>
+    /// <response code="200">Sesión cerrada.</response>
+    [HttpPost("logout")]
+    [EnableRateLimiting("ApiPolicy")]
+    [SwaggerOperation(
+        Summary = "Cierra la sesión",
+        Description = "Revoca el refresh token del usuario"
+    )]
+    public async Task<IActionResult> Logout([FromBody] RefreshTokenDto dto)
+    {
+        await authService.LogoutAsync(dto.RefreshToken);
+        return Ok(new { success = true, message = "Sesión cerrada" });
+    }
+
+    /// <summary>
     /// Registra un nuevo usuario en el sistema.
     /// </summary>
     /// <remarks>

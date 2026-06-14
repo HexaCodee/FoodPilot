@@ -10,6 +10,8 @@ using AuthService.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using AuthService.Application.DTOs.Email;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace AuthService.Application.Services;
 
@@ -17,6 +19,7 @@ namespace AuthService.Application.Services;
 public class AuthService(
     IUserRepository userRepository,
     IRoleRepository roleRepository,
+    IRefreshTokenRepository refreshTokenRepository,
     IPasswordHashService passwordHashService,
     IJwtTokenService jwtTokenService,
     IEmailService emailService,
@@ -168,7 +171,10 @@ public class AuthService(
 
         // Generar token JWT
         var token = jwtTokenService.GenerateToken(user);
-        var expiryMinutes = int.Parse(configuration["JwtSettings:ExpiryInMinutes"] ?? "30");
+        var expiryMinutes = int.Parse(configuration["JwtSettings:ExpirationMinutes"] ?? "60");
+
+        // Generar y guardar refresh token (de larga duración)
+        var refreshToken = await IssueRefreshTokenAsync(user.Id);
 
         // Cargar foto de perfil via raw SQL (sin tocar el modelo de EF Core)
         var profilePicture = await userRepository.GetProfilePictureAsync(user.Id);
@@ -180,8 +186,72 @@ public class AuthService(
             Message = "Login exitoso",
             Token = token,
             UserDetails = MapToUserDetailsDto(user, profilePicture),
+            ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes),
+            RefreshToken = refreshToken
+        };
+    }
+
+    // Renueva el access token a partir de un refresh token vigente (rota el refresh token)
+    public async Task<RefreshResponseDto> RefreshTokenAsync(string refreshToken)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+            throw new UnauthorizedAccessException("Refresh token inválido o expirado");
+
+        var tokenHash = HashRefreshToken(refreshToken);
+        var userId = await refreshTokenRepository.GetUserIdForValidTokenAsync(tokenHash);
+        if (userId == null)
+            throw new UnauthorizedAccessException("Refresh token inválido o expirado");
+
+        // Rotación: invalidar el refresh token usado y emitir uno nuevo
+        await refreshTokenRepository.RevokeAsync(tokenHash);
+
+        var user = await userRepository.GetByIdAsync(userId);
+
+        var newAccessToken = jwtTokenService.GenerateToken(user);
+        var expiryMinutes = int.Parse(configuration["JwtSettings:ExpirationMinutes"] ?? "60");
+        var newRefreshToken = await IssueRefreshTokenAsync(user.Id);
+
+        var profilePicture = await userRepository.GetProfilePictureAsync(user.Id);
+
+        return new RefreshResponseDto
+        {
+            Success = true,
+            Message = "Token renovado",
+            AccessToken = newAccessToken,
+            RefreshToken = newRefreshToken,
+            UserDetails = MapToUserDetailsDto(user, profilePicture),
             ExpiresAt = DateTime.UtcNow.AddMinutes(expiryMinutes)
         };
+    }
+
+    // Revoca un refresh token (logout)
+    public async Task LogoutAsync(string refreshToken)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+            return;
+
+        await refreshTokenRepository.RevokeAsync(HashRefreshToken(refreshToken));
+    }
+
+    // Genera un refresh token opaco, guarda su hash y devuelve el valor en claro (solo una vez)
+    private async Task<string> IssueRefreshTokenAsync(string userId)
+    {
+        var refreshToken = GenerateRefreshTokenValue();
+        var refreshDays = int.Parse(configuration["JwtSettings:RefreshTokenExpiryDays"] ?? "30");
+        await refreshTokenRepository.CreateAsync(userId, HashRefreshToken(refreshToken), DateTime.UtcNow.AddDays(refreshDays));
+        return refreshToken;
+    }
+
+    private static string GenerateRefreshTokenValue()
+    {
+        var bytes = RandomNumberGenerator.GetBytes(32);
+        return Convert.ToBase64String(bytes).Replace('+', '-').Replace('/', '_').TrimEnd('=');
+    }
+
+    private static string HashRefreshToken(string token)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        return Convert.ToHexString(bytes);
     }
 
     // Mapear User a UserResponseDto

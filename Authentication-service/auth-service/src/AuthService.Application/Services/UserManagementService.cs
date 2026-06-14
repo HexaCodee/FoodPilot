@@ -190,6 +190,25 @@ public class UserManagementService(IUserRepository users, IRoleRepository roles)
         };
     }
 
+    public async Task<UserDetailsDto> UpdateProfilePictureAsync(string userId, string pictureUrl)
+    {
+        if (string.IsNullOrWhiteSpace(userId))
+            throw new ArgumentException("Invalid userId", nameof(userId));
+
+        await users.UpdateProfilePictureAsync(userId, pictureUrl);
+
+        var user = await users.GetByIdAsync(userId);
+        var role = user.UserRoles.FirstOrDefault()?.Role?.Name ?? string.Empty;
+
+        return new UserDetailsDto
+        {
+            Id             = user.Id,
+            Username       = user.Username,
+            ProfilePicture = pictureUrl,
+            Role           = role,
+        };
+    }
+
     public async Task DeleteOwnAccountAsync(string userId)
     {
         if (string.IsNullOrWhiteSpace(userId))

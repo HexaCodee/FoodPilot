@@ -30,7 +30,13 @@
     "plugins": [
       "expo-secure-store",
       "expo-asset",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FoodPilot necesita acceso a tus fotos para que elijas una imagen de perfil."
+        }
+      ]
     ]
   }
 }

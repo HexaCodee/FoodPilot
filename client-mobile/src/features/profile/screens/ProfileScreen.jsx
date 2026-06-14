@@ -2,13 +2,15 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  StyleSheet, Image,
+  StyleSheet, Image, Alert, Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useForm, Controller } from 'react-hook-form';
-import { useAuthStore } from '../../../shared/store/authStore.js';
-import { updateProfile } from '../../../shared/api/authClient.js';
+import * as ImagePicker from 'expo-image-picker';
+import { useAuthStore, getRefreshToken } from '../../../shared/store/authStore.js';
+import { useNotificationStore } from '../../../shared/store/notificationStore.js';
+import { updateProfile, uploadProfilePicture, logoutRequest } from '../../../shared/api/authClient.js';
 import { GoldDivider, ErrorMessage } from '../../../shared/components/Common.jsx';
 import { Button } from '../../../shared/components/Button.jsx';
 import { Input } from '../../../shared/components/Input.jsx';
@@ -32,52 +34,92 @@ const MenuRow = ({ icon, label, onPress, danger = false, rightElement }) => (
   </TouchableOpacity>
 );
 
+const NOTIFICATION_OPTIONS = [
+  { key: 'orderUpdates', icon: 'receipt-long', label: 'Estado de pedidos', description: 'Avisos cuando tu pedido cambia de estado' },
+  { key: 'reservationReminders', icon: 'event', label: 'Recordatorios de reservas', description: 'Avisos antes de la hora de tu reserva' },
+  { key: 'promotions', icon: 'local-offer', label: 'Promociones', description: 'Ofertas y novedades de restaurantes' },
+];
+
 export const ProfileScreen = ({ navigation }) => {
   const { user, logout, updateUser } = useAuthStore();
+  const notificationPrefs = useNotificationStore();
   const [loggingOut, setLoggingOut] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [pickedImage, setPickedImage] = useState(null);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const { control, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: {
       username: user?.username ?? '',
-      profilePictureUrl: user?.profilePicture ?? '',
     },
   });
 
   // Mantener el formulario sincronizado si el usuario cambia (ej. tras refresh)
   useEffect(() => {
     if (!editing) {
-      reset({
-        username: user?.username ?? '',
-        profilePictureUrl: user?.profilePicture ?? '',
-      });
+      reset({ username: user?.username ?? '' });
     }
   }, [user, editing, reset]);
 
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
+      const refreshToken = await getRefreshToken();
+      if (refreshToken) {
+        try {
+          await logoutRequest(refreshToken);
+        } catch {
+          // Si falla la revocación en el servidor, igual cerramos sesión localmente
+        }
+      }
       await logout();
     } finally {
       setLoggingOut(false);
     }
   };
 
-  // Editar perfil: PUT /users/me { username, profilePictureUrl } -> actualiza el store
+  // Elegir una foto de la galería del dispositivo
+  const handlePickImage = async () => {
+    setServerError('');
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      setServerError('Se necesita permiso para acceder a la galería.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setPickedImage(result.assets[0]);
+    }
+  };
+
+  // Editar perfil: sube la foto (si se eligió una) y actualiza username -> actualiza el store
   const onSubmit = async (values) => {
     setServerError('');
     setSaving(true);
     try {
-      const { data } = await updateProfile({
-        username: values.username.trim(),
-        profilePictureUrl: values.profilePictureUrl?.trim() || null,
-      });
-      updateUser(data?.userDetails ?? {
-        username: values.username.trim(),
-        profilePicture: values.profilePictureUrl?.trim() || user?.profilePicture,
-      });
+      if (pickedImage) {
+        const extension = pickedImage.uri.split('.').pop();
+        const formData = new FormData();
+        formData.append('ProfilePicture', {
+          uri: pickedImage.uri,
+          name: `profile.${extension}`,
+          type: pickedImage.mimeType ?? `image/${extension}`,
+        });
+        await uploadProfilePicture(formData);
+      }
+
+      const { data } = await updateProfile({ username: values.username.trim() });
+      updateUser(data?.userDetails ?? { username: values.username.trim() });
+      setPickedImage(null);
       setEditing(false);
     } catch (err) {
       setServerError(
@@ -92,18 +134,17 @@ export const ProfileScreen = ({ navigation }) => {
 
   const handleCancelEdit = () => {
     setServerError('');
-    reset({
-      username: user?.username ?? '',
-      profilePictureUrl: user?.profilePicture ?? '',
-    });
+    setPickedImage(null);
+    reset({ username: user?.username ?? '' });
     setEditing(false);
   };
 
-  // Avatar: solo se muestra como imagen si la URL empieza con "http",
-  // de lo contrario se usa el ícono por defecto (no hay assets estáticos en el proyecto)
-  const avatarUri = typeof user?.profilePicture === 'string' && user.profilePicture.startsWith('http')
-    ? user.profilePicture
-    : null;
+  // Avatar: muestra la imagen recién elegida (si hay), si no la guardada (debe ser "http..."),
+  // de lo contrario se usa el ícono por defecto
+  const avatarUri = pickedImage?.uri
+    ?? (typeof user?.profilePicture === 'string' && user.profilePicture.startsWith('http')
+      ? user.profilePicture
+      : null);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -155,27 +196,24 @@ export const ProfileScreen = ({ navigation }) => {
                 )}
               />
 
-              <Controller
-                control={control}
-                name='profilePictureUrl'
-                rules={{
-                  validate: (v) =>
-                    !v || /^https?:\/\//.test(v) || 'Debe ser una URL válida (http/https)',
-                }}
-                render={({ field: { onChange, value, onBlur } }) => (
-                  <Input
-                    label='URL de foto de perfil (opcional)'
-                    placeholder='https://...'
-                    autoCapitalize='none'
-                    keyboardType='url'
-                    onChangeText={onChange}
-                    onBlur={onBlur}
-                    value={value}
-                    error={errors.profilePictureUrl?.message}
-                    leftIcon={<MaterialIcons name='image' size={18} color={COLORS.textSubtle} />}
-                  />
+              <Text style={styles.fieldLabel}>Foto de perfil</Text>
+              <TouchableOpacity
+                onPress={handlePickImage}
+                style={styles.pickImageBtn}
+                activeOpacity={0.8}
+              >
+                {avatarUri ? (
+                  <Image source={{ uri: avatarUri }} style={styles.pickImagePreview} />
+                ) : (
+                  <View style={styles.pickImagePlaceholder}>
+                    <MaterialIcons name='person' size={28} color={COLORS.primary} />
+                  </View>
                 )}
-              />
+                <View style={styles.pickImageTextWrap}>
+                  <MaterialIcons name='photo-library' size={18} color={COLORS.primary} />
+                  <Text style={styles.pickImageText}>Elegir foto de la galería</Text>
+                </View>
+              </TouchableOpacity>
 
               <View style={styles.editActions}>
                 <Button
@@ -236,17 +274,70 @@ export const ProfileScreen = ({ navigation }) => {
                 <MenuRow
                   icon='notifications-none'
                   label='Notificaciones'
-                  onPress={() => {}}
+                  onPress={() => setShowNotifications((prev) => !prev)}
+                  rightElement={
+                    <MaterialIcons
+                      name={showNotifications ? 'expand-less' : 'expand-more'}
+                      size={20}
+                      color={COLORS.textSubtle}
+                    />
+                  }
                 />
               </View>
+              {showNotifications && (
+                <View style={styles.notifCard}>
+                  {NOTIFICATION_OPTIONS.map((opt, index) => (
+                    <View key={opt.key}>
+                      {index > 0 && <View style={styles.menuSep} />}
+                      <View style={styles.notifRow}>
+                        <View style={styles.menuIcon}>
+                          <MaterialIcons name={opt.icon} size={20} color={COLORS.primary} />
+                        </View>
+                        <View style={styles.notifTextWrap}>
+                          <Text style={styles.menuLabel}>{opt.label}</Text>
+                          <Text style={styles.notifDescription}>{opt.description}</Text>
+                        </View>
+                        <Switch
+                          value={notificationPrefs[opt.key]}
+                          onValueChange={(value) => notificationPrefs.setPreference(opt.key, value)}
+                          trackColor={{ false: COLORS.border, true: COLORS.primaryDim }}
+                          thumbColor={notificationPrefs[opt.key] ? COLORS.primary : COLORS.textSubtle}
+                        />
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
 
             <View style={styles.menuSection}>
               <Text style={styles.menuSectionTitle}>Soporte</Text>
               <View style={styles.menuCard}>
-                <MenuRow icon='help-outline' label='Ayuda y soporte' onPress={() => {}} />
+                <MenuRow
+                  icon='help-outline'
+                  label='Ayuda y soporte'
+                  onPress={() =>
+                    Alert.alert(
+                      'Ayuda y soporte',
+                      '¿Tienes alguna duda o problema? Escríbenos a soporte@foodpilot.com y te responderemos en menos de 24 horas.\n\n' +
+                      'Preguntas frecuentes:\n' +
+                      '• ¿Cómo cancelo un pedido? Ve a "Mis pedidos" y selecciona la opción de cancelar antes de que el restaurante lo confirme.\n' +
+                      '• ¿Cómo cambio mi contraseña? Cierra sesión y usa "¿Olvidaste tu contraseña?" en la pantalla de inicio de sesión.\n' +
+                      '• ¿Cómo hago una reserva? Entra al restaurante que te interese y selecciona "Reservar mesa".'
+                    )
+                  }
+                />
                 <View style={styles.menuSep} />
-                <MenuRow icon='info-outline' label='Acerca de FoodPilot' onPress={() => {}} />
+                <MenuRow
+                  icon='info-outline'
+                  label='Acerca de FoodPilot'
+                  onPress={() =>
+                    Alert.alert(
+                      'Acerca de FoodPilot',
+                      'FoodPilot v1.0.0\n\nTu app para descubrir restaurantes, hacer pedidos y reservar mesas, todo en un solo lugar.\n\n© 2026 FoodPilot'
+                    )
+                  }
+                />
               </View>
             </View>
 
@@ -376,6 +467,29 @@ const styles = StyleSheet.create({
   menuIconDanger: { backgroundColor: COLORS.errorDim },
   menuLabel: { flex: 1, color: COLORS.text, fontSize: FONT_SIZE.base },
   menuLabelDanger: { color: COLORS.error },
+
+  // Panel de preferencias de notificaciones
+  notifCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+    marginTop: SPACING.sm,
+  },
+  notifRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    gap: SPACING.md,
+  },
+  notifTextWrap: { flex: 1 },
+  notifDescription: {
+    color: COLORS.textSubtle,
+    fontSize: FONT_SIZE.xs,
+    marginTop: 2,
+  },
   menuSep: { height: 1, backgroundColor: COLORS.borderSubtle, marginLeft: SPACING.md + 36 + SPACING.md },
 
   // Edit form card
@@ -392,6 +506,47 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   editActionBtn: { flex: 1 },
+
+  // Picker de imagen de perfil
+  fieldLabel: {
+    color: COLORS.textMuted,
+    fontSize: FONT_SIZE.sm,
+    marginBottom: SPACING.sm,
+  },
+  pickImageBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    backgroundColor: COLORS.background,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  pickImagePreview: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  pickImagePlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: COLORS.primaryDim,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pickImageTextWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  pickImageText: {
+    color: COLORS.primary,
+    fontSize: FONT_SIZE.sm,
+    fontWeight: FONT_WEIGHT.medium,
+  },
 
   version: {
     color: COLORS.textSubtle,
