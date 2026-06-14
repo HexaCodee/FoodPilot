@@ -25,6 +25,7 @@ public static class ServiceCollectionExtensions
         // Registrar repositorios
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 
         // Registrar servicios de aplicación
         services.AddScoped<IAuthService, Application.Services.AuthService>();

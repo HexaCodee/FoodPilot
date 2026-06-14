@@ -1,9 +1,10 @@
 // client-mobile/src/features/orders/screens/MyOrdersScreen.jsx
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
   RefreshControl, StyleSheet, Alert,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useAuthStore } from '../../../shared/store/authStore.js';
@@ -71,7 +72,7 @@ export const MyOrdersScreen = () => {
     }
   }, [user?.id, filter]);
 
-  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const handleCancel = (id) => {
     Alert.alert(

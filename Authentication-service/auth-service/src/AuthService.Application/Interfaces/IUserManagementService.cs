@@ -11,5 +11,6 @@ public interface IUserManagementService
     Task<(IReadOnlyList<UserResponseDto> Users, int Total)> GetAllUsersAsync(string? search, string? role, int page, int limit);
     Task<UserResponseDto> UpdateUserStatusAsync(string userId, bool status);
     Task<UserDetailsDto> UpdateProfileAsync(string userId, string username, string? profilePictureUrl = null);
+    Task<UserDetailsDto> UpdateProfilePictureAsync(string userId, string pictureUrl);
     Task DeleteOwnAccountAsync(string userId);
 }

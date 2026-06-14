@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity,
-  RefreshControl, StyleSheet,
+  RefreshControl, StyleSheet, Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -85,6 +85,10 @@ export const HomeScreen = ({ navigation }) => {
 
   const onRefresh = () => { setRefreshing(true); load(); };
 
+  const avatarUri = typeof user?.profilePicture === 'string' && user.profilePicture.startsWith('http')
+    ? user.profilePicture
+    : null;
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
@@ -109,7 +113,11 @@ export const HomeScreen = ({ navigation }) => {
             onPress={() => navigation.navigate('Profile')}
             style={styles.avatarBtn}
           >
-            <MaterialIcons name='person' size={22} color={COLORS.primary} />
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={styles.avatarImg} />
+            ) : (
+              <MaterialIcons name='person' size={22} color={COLORS.primary} />
+            )}
           </TouchableOpacity>
         </View>
 
@@ -134,6 +142,7 @@ export const HomeScreen = ({ navigation }) => {
               icon='restaurant'
               label='Restaurantes'
               value={stats.restaurants}
+              onPress={() => navigation.navigate('Restaurants')}
             />
           </View>
         )}
@@ -223,6 +232,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primaryDim,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  avatarImg: {
+    width: 42,
+    height: 42,
   },
 
   // Stats

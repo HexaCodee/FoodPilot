@@ -12,6 +12,7 @@ const NO_REFRESH_PATHS = [
   '/auth/verify-email',
   '/auth/resend-verification',
   '/auth/refresh',
+  '/auth/logout',
 ];
 
 const isNoRefreshPath = (url = '') =>
@@ -115,8 +116,18 @@ export const resetPassword = (token, newPassword) =>
 export const verifyEmail = (token) =>
   authClient.post('/auth/verify-email', { token });
 
+// Revoca el refresh token en el servidor (best-effort, no requiere access token vigente)
+export const logoutRequest = (refreshToken) =>
+  authClient.post('/auth/logout', { refreshToken });
+
 export const getMe = () =>
   authClient.get('/users/me');
 
 export const updateProfile = (data) =>
   authClient.put('/users/me', data);
+
+// Sube una foto de perfil desde la galería del dispositivo (multipart/form-data)
+export const uploadProfilePicture = (formData) =>
+  authClient.post('/users/me/profile-picture', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });

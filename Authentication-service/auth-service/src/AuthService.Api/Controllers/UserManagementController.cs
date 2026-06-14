@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using AuthService.Application.DTOs;
 using AuthService.Application.Interfaces;
+using AuthService.Application.Validators;
 using AuthService.Domain.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -17,7 +18,7 @@ namespace AuthService.Api.Controllers;
 [Tags("User Management")]
 [Produces("application/json")]
 [Authorize]
-public class UserManagementController(IUserManagementService userManagement) : ControllerBase
+public class UserManagementController(IUserManagementService userManagement, IWebHostEnvironment env) : ControllerBase
 {
     // Busca el claim "role" sin importar cómo ASP.NET mapee los nombres de claims
     private string? GetUserRole() =>
@@ -107,6 +108,43 @@ public class UserManagementController(IUserManagementService userManagement) : C
 
         var result = await userManagement.UpdateProfileAsync(userId, dto.Username, dto.ProfilePictureUrl);
         return Ok(new { success = true, message = "Perfil actualizado", userDetails = result });
+    }
+
+    /// <summary>
+    /// Sube una foto de perfil desde el dispositivo del usuario.
+    /// </summary>
+    /// <remarks>
+    /// Acepta imágenes JPG, PNG o WEBP de hasta 5MB. La imagen se guarda en el
+    /// servidor y se asigna como foto de perfil del usuario autenticado.
+    /// </remarks>
+    [HttpPost("me/profile-picture")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    [Consumes("multipart/form-data")]
+    [SwaggerOperation(Summary = "Sube mi foto de perfil", Description = "Sube una imagen desde la galería del dispositivo y la asigna como foto de perfil")]
+    public async Task<IActionResult> UploadMyProfilePicture([FromForm] UploadProfilePictureDto dto)
+    {
+        var userId = GetUserId();
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized(new { success = false, message = "Token inválido" });
+
+        if (dto.ProfilePicture == null)
+            return BadRequest(new { success = false, message = "Debe proporcionar una imagen" });
+
+        var (isValid, error) = FileValidator.ValidateImage(dto.ProfilePicture);
+        if (!isValid)
+            return BadRequest(new { success = false, message = error });
+
+        var uploadsDir = Path.Combine(env.WebRootPath, "uploads", "profile-pictures");
+        Directory.CreateDirectory(uploadsDir);
+
+        var fileName = FileValidator.GenerateSecureFileName(dto.ProfilePicture.FileName);
+        await System.IO.File.WriteAllBytesAsync(Path.Combine(uploadsDir, fileName), dto.ProfilePicture.Data);
+
+        // Construir la URL con el host que usó el cliente para llegar al servidor
+        var pictureUrl = $"{Request.Scheme}://{Request.Host}/uploads/profile-pictures/{fileName}";
+
+        var result = await userManagement.UpdateProfilePictureAsync(userId, pictureUrl);
+        return Ok(new { success = true, message = "Foto de perfil actualizada", userDetails = result });
     }
 
     /// <summary>

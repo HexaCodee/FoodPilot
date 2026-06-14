@@ -4,6 +4,7 @@ import {
   View, Text, FlatList, TouchableOpacity, Modal, ScrollView,
   RefreshControl, StyleSheet, Alert, Platform,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialIcons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -285,7 +286,7 @@ export const MyReservationsScreen = () => {
     }
   }, [user?.id]);
 
-  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const handleCancel = (id) => {
     Alert.alert(
