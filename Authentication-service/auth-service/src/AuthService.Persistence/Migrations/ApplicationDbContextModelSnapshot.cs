@@ -223,10 +223,8 @@ namespace AuthService.Persistence.Migrations
 
                     b.Property<string>("ProfilePicture")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
-                        .HasDefaultValue("")
                         .HasColumnName("profile_picture");
 
                     b.Property<DateTime>("UpdatedAt")

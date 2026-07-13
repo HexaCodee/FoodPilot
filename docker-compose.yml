@@ -1,0 +1,189 @@
+name: foodpilot
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: foodpilot-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-foodpilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-foodpilot123}
+      POSTGRES_DB: ${POSTGRES_DB:-foodpilot}
+    ports:
+      - "${POSTGRES_PORT:-5435}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-foodpilot} -d ${POSTGRES_DB:-foodpilot}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - foodpilot-network
+
+  mongodb:
+    image: mongo:7
+    container_name: foodpilot-mongodb
+    restart: unless-stopped
+    ports:
+      - "${MONGODB_PORT:-27020}:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--host", "127.0.0.1", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - foodpilot-network
+
+  auth-service:
+    build:
+      context: ./Authentication-service/auth-service
+      dockerfile: ../../dockerfiles/Dockerfile.auth-service
+    container_name: foodpilot-auth-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:5156
+      DOTNET_USE_POLLING_FILE_WATCHER: "1"
+      DOTNET_WATCH_RESTART_ON_RUDE_EDIT: "1"
+      ConnectionStrings__DefaultConnection: >-
+        Host=postgres;Port=5432;Database=${POSTGRES_DB:-foodpilot};Username=${POSTGRES_USER:-foodpilot};Password=${POSTGRES_PASSWORD:-foodpilot123}
+      JwtSettings__SecretKey: ${JWT_SECRET:-MyVerySecretKeyForJWTTokenAuthenticationWith256Bits!}
+      JwtSettings__Issuer: ${JWT_ISSUER:-FoodPilot}
+      JwtSettings__Audience: ${JWT_AUDIENCE:-FoodPilot}
+    volumes:
+      - ./Authentication-service/auth-service:/src
+      - /src/src/AuthService.Api/bin
+      - /src/src/AuthService.Api/obj
+      - /src/src/AuthService.Application/bin
+      - /src/src/AuthService.Application/obj
+      - /src/src/AuthService.Domain/bin
+      - /src/src/AuthService.Domain/obj
+      - /src/src/AuthService.Persistence/bin
+      - /src/src/AuthService.Persistence/obj
+    ports:
+      - "${AUTH_SERVICE_PORT:-5156}:5156"
+    networks:
+      - foodpilot-network
+
+  event-service:
+    build:
+      context: ./event-service
+      dockerfile: ../dockerfiles/Dockerfile.event-service
+    container_name: foodpilot-event-service
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3007
+      URI_MONGODB: mongodb://mongodb:27017/event-service-foodpilot
+    volumes:
+      - ./event-service:/app
+      - /app/node_modules
+    ports:
+      - "${EVENT_SERVICE_PORT:-3007}:3007"
+    networks:
+      - foodpilot-network
+
+  restaurant-admin:
+    build:
+      context: ./restaurant-admin
+      dockerfile: ../dockerfiles/Dockerfile.restaurant-admin
+    container_name: foodpilot-restaurant-admin
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3020
+      URI_MONGODB: mongodb://mongodb:27017/restaurant-admin-foodpilot
+      JWT_SECRET: ${JWT_SECRET:-MyVerySecretKeyForJWTTokenAuthenticationWith256Bits!}
+    volumes:
+      - ./restaurant-admin:/app
+      - /app/node_modules
+    ports:
+      - "${RESTAURANT_ADMIN_PORT:-3020}:3020"
+    networks:
+      - foodpilot-network
+
+  order-tracking-api:
+    build:
+      context: ./order-tracking-api
+      dockerfile: ../dockerfiles/Dockerfile.order-tracking-api
+    container_name: foodpilot-order-tracking-api
+    restart: unless-stopped
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      URI_MONGODB: mongodb://mongodb:27017/order-tracking-foodpilot
+    volumes:
+      - ./order-tracking-api:/app
+      - /app/node_modules
+    ports:
+      - "${ORDER_TRACKING_PORT:-3000}:3000"
+    networks:
+      - foodpilot-network
+
+  client-admin:
+    build:
+      context: ./client-admin
+      dockerfile: ../dockerfiles/Dockerfile.client-admin
+    container_name: foodpilot-client-admin
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      VITE_AUTH_URL: ${VITE_AUTH_URL:-http://foodpilot-auth-service:5156/api/v1}
+      VITE_EVENT_URL: ${VITE_EVENT_URL:-http://foodpilot-event-service:3007}
+      VITE_RESTAURANT_URL: ${VITE_RESTAURANT_URL:-http://foodpilot-restaurant-admin:3020}
+      VITE_ORDER_TRACKING_URL: ${VITE_ORDER_TRACKING_URL:-http://foodpilot-order-tracking-api:3000}
+    volumes:
+      - ./client-admin:/app
+      - /app/node_modules
+    ports:
+      - "${CLIENT_ADMIN_PORT:-5173}:5173"
+    networks:
+      - foodpilot-network
+
+  client-mobile:
+    build:
+      context: ./client-mobile
+      dockerfile: ../dockerfiles/Dockerfile.client-mobile
+    container_name: foodpilot-client-mobile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      EXPO_DEVTOOLS_LISTEN_ADDRESS: 0.0.0.0
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+      EXPO_PUBLIC_AUTH_URL: ${EXPO_PUBLIC_AUTH_URL:-http://foodpilot-auth-service:5156/api/v1}
+    volumes:
+      - ./client-mobile:/app
+      - /app/node_modules
+    ports:
+      - "${CLIENT_MOBILE_PORT:-8081}:8081"
+      - "${CLIENT_MOBILE_EXPO_PORT:-19000}:19000"
+      - "${CLIENT_MOBILE_EXPO_DEVTOOLS_PORT:-19001}:19001"
+      - "${CLIENT_MOBILE_EXPO_INSPECTOR_PORT:-19002}:19002"
+    networks:
+      - foodpilot-network
+
+networks:
+  foodpilot-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  mongo_data:

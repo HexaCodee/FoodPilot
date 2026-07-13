@@ -27,7 +27,11 @@
 **/appsettings.Production.json
 **/secret.json
 .env
+.env.*
 **/.env
+**/.env.*
+!**/.env.example
+!.env.docker.example
 
 ## [Logs]
 *.log
@@ -53,3 +57,9 @@ Authentication-service/auth-service/src/AuthService.Api/wwwroot/uploads/
 
 ## [ASP.NET Core Data Protection keys - machine-specific]
 Authentication-service/auth-service/src/AuthService.Api/keys/
+
+## [Dependencies]
+node_modules/
+**/node_modules/
+.pnpm-store/
+**/.pnpm-store/

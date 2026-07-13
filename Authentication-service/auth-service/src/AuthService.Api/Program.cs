@@ -135,8 +135,8 @@ using (var scope = app.Services.CreateScope())
     try
     {
         logger.LogInformation("Verificando DB...");
-        // Crear DB si no existe
-        await context.Database.EnsureCreatedAsync();
+        // Aplicar migraciones pendientes y crear el esquema si es necesario
+        await context.Database.MigrateAsync();
 
         // Agregar columna profile_picture si no existe (columna añadida después de la creación inicial)
         try
