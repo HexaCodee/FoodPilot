@@ -21,6 +21,11 @@ public class UserProfile
     [RegularExpression(@"^\d{8}$", ErrorMessage = "El teléfono debe contener solo números.")]
     public string Phone {get; set;} = string.Empty;
 
+    // URL de la foto de perfil
+    [Required]
+    [MaxLength(255)]
+    public string ProfilePicture {get; set;} = string.Empty;
+
     // Fecha creación (UTC)
     public DateTime CreatedAt {get; set;} = DateTime.UtcNow;
 
