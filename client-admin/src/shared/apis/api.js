@@ -17,25 +17,25 @@ export const setAuthHandlers = ({ getToken, getRefreshToken, onLogout, onTokenRe
 // ── Axios instances ───────────────────────────────────────────────────────────
 const axiosAuth = axios.create({
   baseURL: import.meta.env.VITE_AUTH_URL,
-  timeout: 5000,
+  timeout: 50000,
   headers: { 'Content-Type': 'application/json' },
 });
 
 const axiosAdmin = axios.create({
   baseURL: import.meta.env.VITE_ADMIN_URL,
-  timeout: 5000,
+  timeout: 50000,
   headers: { 'Content-Type': 'application/json' },
 });
 
 const axiosOrders = axios.create({
   baseURL: import.meta.env.VITE_ORDERS_URL,
-  timeout: 5000,
+  timeout: 50000,
   headers: { 'Content-Type': 'application/json' },
 });
 
 const axiosEvents = axios.create({
   baseURL: import.meta.env.VITE_EVENTS_URL,
-  timeout: 5000,
+  timeout: 50000,
   headers: { 'Content-Type': 'application/json' },
 });
 
